@@ -1,7 +1,7 @@
 {
   "name": "somnia-gas-profiler",
   "version": "1.0.0",
-  "description": "A developer-friendly CLI tool for profiling gas usage of smart contracts deployed on the Somnia testnet",
+  "description": "Somnia Gas Profiler v2.0 - High-performance developer tool with AI-powered analysis, bytecode processing, and simplified CLI for Somnia network smart contracts",
   "main": "cli/index.js",
   "bin": {
     "somnia-gas-profiler": "./cli/index.js"
@@ -9,6 +9,9 @@
   "scripts": {
     "start": "node cli/index.js",
     "analyze": "node cli/index.js analyze",
+    "profile": "node cli/index.js profile",
+    "compile-and-profile": "node cli/index.js compile-and-profile",
+    "quick-analyze": "node cli/index.js quick-analyze",
     "report": "node cli/index.js report",
     "test": "set NODE_ENV=test && mocha test/**/*.spec.js",
     "test:watch": "mocha test/**/*.spec.js --watch",
@@ -24,7 +27,13 @@
     "ethereum",
     "evm",
     "smart-contracts",
-    "cli"
+    "cli",
+    "bytecode",
+    "io-net",
+    "ai-analysis",
+    "solidity",
+    "foundry",
+    "hardhat"
   ],
   "author": "Somnia Gas Profiler Team",
   "license": "MIT",
@@ -38,14 +47,12 @@
     "table": "^6.8.1",
     "chalk": "^4.1.2",
     "dotenv": "^16.3.1",
-    "openai": "^4.20.1"
+    "openai": "^4.20.1",
+    "axios": "^1.6.0"
   },
   "devDependencies": {
     "mocha": "^10.2.0",
-    "chai": "^4.3.10",
-    "sinon": "^17.0.1",
-    "@nomicfoundation/hardhat-toolbox": "^3.0.2",
-    "hardhat": "^2.17.1"
+    "chai": "^4.3.10"
   },
   "repository": {
     "type": "git",
