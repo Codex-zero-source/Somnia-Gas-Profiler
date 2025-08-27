@@ -6,7 +6,6 @@ const fs = require('fs').promises;
 // Import modules to test
 const profiler = require('../profiler');
 const reporter = require('../reporter');
-const { NaturalLanguageSummaryGenerator } = require('../reporter/nl');
 
 describe('Integration Tests', function() {
   let sandbox;
@@ -171,8 +170,8 @@ describe('Integration Tests', function() {
     });
   });
 
-  describe('Natural Language Integration', function() {
-    it('should integrate natural language generation with reporting', async function() {
+  describe('Developer Analysis Integration', function() {
+    it('should integrate developer analysis with reporting', async function() {
       const mockData = {
         rpc: 'https://dream-rpc.somnia.network',
         address: '0x742d35Cc6634C0532925a3b8D6c6C0c1f528d15',
@@ -185,46 +184,42 @@ describe('Integration Tests', function() {
         }
       };
 
-      const nlGenerator = new NaturalLanguageSummaryGenerator();
+      const { DeveloperAnalyzer } = require('../lib/developer-analyzer');
+      const analyzer = new DeveloperAnalyzer();
       
-      // Mock OpenAI response
-      const mockOpenAI = {
-        chat: {
-          completions: {
-            create: sandbox.stub().resolves({
-              choices: [{
-                message: {
-                  content: 'The contract shows efficient gas usage with consistent performance.'
-                }
-              }]
-            })
-          }
-        }
-      };
-
-      // Mock OpenAI initialization
-      sandbox.stub(nlGenerator, 'initialize').resolves(true);
-      nlGenerator.openai = mockOpenAI;
-      nlGenerator.initialized = true;
-
-      const summary = await nlGenerator.generateSummary(mockData);
-      expect(summary).to.include('efficient gas usage');
+      const analysis = analyzer.analyzeGasProfile(mockData, mockData.address);
+      
+      expect(analysis).to.have.property('contract', mockData.address);
+      expect(analysis).to.have.property('categories');
+      expect(analysis).to.have.property('insights');
+      expect(analysis).to.have.property('recommendations');
+      expect(analysis).to.have.property('summary');
     });
 
-    it('should handle OpenAI service unavailability', async function() {
-      const nlGenerator = new NaturalLanguageSummaryGenerator();
+    it('should handle enhanced analysis features', async function() {
+      const mockAnalysis = {
+        contract: '0x742d35Cc6634C0532925a3b8D6c6C0c1f528d15',
+        network: 'Somnia Testnet', 
+        functionsAnalyzed: 1,
+        categories: {},
+        insights: {
+          averageGasUsage: 43000,
+          gasRange: { min: 43000, max: 43000 },
+          mostExpensive: 'set(uint256)',
+          mostEfficient: 'set(uint256)'
+        },
+        recommendations: [],
+        summary: { totalFunctions: 1 }
+      };
+
+      const { DeveloperAnalyzer } = require('../lib/developer-analyzer');
+      const analyzer = new DeveloperAnalyzer();
       
-      // Mock missing API key
-      const originalKey = process.env.OPENAI_API_KEY;
-      delete process.env.OPENAI_API_KEY;
-
-      const result = await nlGenerator.initialize();
-      expect(result).to.be.false;
-
-      // Restore
-      if (originalKey) {
-        process.env.OPENAI_API_KEY = originalKey;
-      }
+      const output = analyzer.displayAnalysis(mockAnalysis, false);
+      
+      expect(output).to.be.a('string');
+      expect(output).to.include('Somnia Gas Profiling Report');
+      expect(output).to.include('Developer Insights');
     });
   });
 
