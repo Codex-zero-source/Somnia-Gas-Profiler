@@ -26,7 +26,8 @@ class ContractDeployment {
       
       // Test connection
       const network = await this.provider.getNetwork();
-      console.log(chalk.green(`✅ Connected to network: ${network.name || 'Unknown'} (Chain ID: ${network.chainId})`));
+      const networkName = network.chainId === 50312n ? 'Somnia Testnet' : (network.name || 'Unknown');
+      console.log(chalk.green(`✅ Connected to network: ${networkName} (Chain ID: ${network.chainId})`));
       
       // Initialize wallet
       if (!process.env.PRIVATE_KEY) {
@@ -35,7 +36,8 @@ class ContractDeployment {
       
       this.wallet = new ethers.Wallet(process.env.PRIVATE_KEY, this.provider);
       const balance = await this.provider.getBalance(this.wallet.address);
-      console.log(chalk.blue(`💰 Deployer: ${this.wallet.address} (Balance: ${ethers.formatEther(balance)} ETH)`));
+      const currency = network.chainId === 50312n ? 'STT' : 'ETH';
+      console.log(chalk.blue(`💰 Deployer: ${this.wallet.address} (Balance: ${ethers.formatEther(balance)} ${currency})`));
       
       return true;
     } catch (error) {

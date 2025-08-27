@@ -1,436 +1,306 @@
-# IO.net Enhanced Somnia Gas Profiler v2.0-scalable
-# Somnia Gas Profiler v2.0
+# Somnia Gas Profiler
 
-A high-performance developer tool that takes **minimal input** (contract bytecode OR deployed address) and provides comprehensive gas profiling with **AI-powered insights** via IO.net Intelligence API.
+Professional gas profiling and analysis tool for Somnia blockchain smart contracts with advanced developer insights and automated ABI fetching.
 
-## 🌟 What's New in v2.0
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/somnia/gas-profiler)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D16.0.0-brightgreen.svg)](https://nodejs.org/)
 
-- **🤖 IO.net AI Integration**: Natural language analysis powered by DeepSeek-R1-0528
-- **📝 Bytecode Processing**: Profile contracts directly from bytecode with auto-ABI detection
-- **🔧 Source Compilation**: Compile and profile Solidity contracts in one command
-- **⚡ Quick Analysis**: Ultra-fast analysis with intelligent defaults
-- **📊 Enhanced CSV Output**: Comprehensive reports with aggregated statistics
-- **🎯 Smart Arguments**: Automatic test argument generation for common patterns
-- **🔍 Contract Detection**: Auto-detect ERC20, ERC721, DeFi, and other contract types
+## 🚀 Features
 
-## ✨ Key Features
+- **Automated ABI Fetching**: Automatically retrieves contract ABIs from Somnia Explorer
+- **Comprehensive Gas Analysis**: Detailed gas consumption profiling for smart contract functions
+- **Developer-Focused Insights**: Categorized analysis with optimization recommendations
+- **Multiple Output Formats**: JSON, CSV, and table formats for different use cases
+- **Gasless Profiling**: Analyze contracts without spending gas using static analysis
+- **Cost Calculation**: Automatic STT (Somnia Test Token) cost calculations
+- **Production Ready**: Clean, lightweight setup with professional documentation
 
-- **🚀 Minimal Input Requirements**: Just bytecode or address - everything else is automatic
-- **🧠 AI-Powered Analysis**: Get optimization recommendations and cost insights
-- **📦 Multiple Input Types**: Bytecode, deployed addresses, source files, or inline code
-- **🎯 Automatic Detection**: Contract types, function signatures, and test arguments
-- **📈 Enhanced Reporting**: CSV, JSON, and interactive table formats
-- **⚡ Performance Optimized**: Built for speed with intelligent caching
-- **🌐 Somnia Native**: Optimized for Somnia's high-performance network
+## 📋 Prerequisites
 
+- **Node.js**: Version 16.0.0 or higher
+- **npm**: Latest version recommended
+- **Git**: For cloning the repository
 
-## 🚀 Quick Start
+## ⚡ Quick Start
 
 ### Installation
 
 ```bash
-# Clone the enhanced repository
-git clone https://github.com/Codex-zero-source/Somnia-Gas-Profiler.git
-cd Somnia-Gas-Profiler
+# Clone the repository
+git clone https://github.com/somnia/gas-profiler.git
+cd gas-profiler
 
 # Install dependencies
 npm install
 
-# Set up environment
-cp .env.example .env
-# Edit .env with your PRIVATE_KEY and IOINTELLIGENCE_API_KEY
+# Verify installation
+npm test
 ```
 
-### Requirements
-
-- Node.js >= 16.0.0
-- Somnia testnet account with ETH for gas fees
-- **IO.net API key** for AI-powered analysis ([Get yours here](https://io.net))
-- (Optional) Foundry/Hardhat for source compilation
-
-### Ultra-Quick Usage
+### Basic Usage
 
 ```bash
-# Profile any deployed contract (auto-detects everything)
-somnia-gas-profiler quick-analyze --address 0x742d35Cc... --standard ERC20
+# Profile a contract by address (auto-fetches ABI)
+npm run quick-analyze -- --address 0x1234567890123456789012345678901234567890
 
-# Profile from bytecode
-somnia-gas-profiler profile --bytecode 0x608060405234...
+# Profile with custom ABI file
+npm run analyze -- --address 0x1234... --abi ./path/to/contract.json
 
-# Compile and profile in one command
-somnia-gas-profiler compile-and-profile --source MyContract.sol
-
-# Profile inline contract
-somnia-gas-profiler profile --code "contract Test { function get() public pure returns (uint256) { return 42; } }"
+# Generate detailed reports
+npm run report -- --in ./profiling_results.json --format csv
 ```
 
-## 🎯 Enhanced Commands
+## 🛠️ CLI Commands
 
-### `profile` - One-Command Profiling (NEW)
+### Core Commands
 
-Profile any contract with minimal input and automatic analysis.
+| Command | Description | Example |
+|---------|-------------|---------|
+| `quick-analyze` | Fast analysis with auto ABI fetching | `npm run quick-analyze -- --address 0x123...` |
+| `analyze` | Full contract analysis | `npm run analyze -- --address 0x123... --functions swap,mint` |
+| `profile` | Gas profiling with custom parameters | `npm run profile -- --contract ./contract.json` |
+| `report` | Generate reports from existing data | `npm run report -- --in results.json --format table` |
 
-```bash
-somnia-gas-profiler profile [input-option] [options]
+### Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--address` | Contract address to analyze | Required |
+| `--abi` | Path to ABI file | Auto-fetch |
+| `--functions` | Specific functions to profile | All functions |
+| `--network` | Network configuration | somnia |
+| `--format` | Output format (json/csv/table) | json |
+| `--out` | Output file path | Auto-generated |
+
+## 📊 Analysis Features
+
+### Function Categorization
+- **Query Functions**: View and read operations
+- **Administrative Functions**: Configuration and setup
+- **Fee Management**: Fee-related operations
+- **State Management**: State-changing operations
+- **Other Functions**: Uncategorized functions
+
+### Gas Efficiency Ratings
+- **Excellent**: < 50,000 gas
+- **Good**: 50,000 - 100,000 gas
+- **Moderate**: 100,000 - 500,000 gas
+- **High**: 500,000 - 1,000,000 gas
+- **Very High**: > 1,000,000 gas
+
+### Output Formats
+
+#### JSON Output
+```json
+{
+  "contract": "0x1234...",
+  "network": "Somnia Testnet",
+  "results": {
+    "functionName": {
+      "aggregated": {
+        "avg": 85000,
+        "min": 80000,
+        "max": 90000,
+        "total": 850000,
+        "callCount": 10
+      }
+    }
+  }
+}
 ```
 
-**Input Options (choose one):**
-- `--address <0x...>` - Deployed contract address
-- `--bytecode <0x...>` - Contract bytecode (auto-deploys)
-- `--source <file.sol>` - Solidity source file (auto-compiles)
-- `--code <"contract...">` - Inline Solidity code
-
-**Features:**
-- 🤖 **Automatic ABI detection** from multiple sources
-- 🎯 **Smart argument generation** based on contract type
-- 📊 **Automatic CSV export** with aggregated statistics
-- 🧠 **AI analysis** via IO.net (if configured)
-
-**Examples:**
-```bash
-# Profile deployed ERC20 with auto-detection
-somnia-gas-profiler profile --address 0x123... --runs 5
-
-# Profile from bytecode
-somnia-gas-profiler profile --bytecode 0x608060405234801561001...
-
-# Compile and profile source
-somnia-gas-profiler profile --source ./MyToken.sol
-```
-
-### `compile-and-profile` - Solidity Workflow (NEW)
-
-Compile Solidity contracts and immediately profile them.
-
-```bash
-somnia-gas-profiler compile-and-profile [source-option] [options]
-```
-
-**Source Options:**
-- `--source <file.sol>` - Solidity source file
-- `--code <"contract...">` - Inline Solidity code
-
-**Compilation Options:**
-- `--optimization-runs <number>` - Optimizer runs (default: 200)
-- `--solc-version <version>` - Solidity version (default: 0.8.19)
-- `--via-ir` - Enable IR compilation
-
-**Examples:**
-```bash
-# High optimization compilation
-somnia-gas-profiler compile-and-profile \
-  --source ./OptimizedContract.sol \
-  --optimization-runs 1000 \
-  --runs 10
-
-# IR compilation for complex contracts
-somnia-gas-profiler compile-and-profile \
-  --source ./Advanced.sol \
-  --via-ir \
-  --solc-version 0.8.21
-```
-
-### `quick-analyze` - Fast Analysis (NEW)
-
-Ultra-fast analysis of deployed contracts with intelligent defaults.
-
-```bash
-somnia-gas-profiler quick-analyze --address <0x...> [options]
-```
-
-**Smart Features:**
-- 🕵️ **Auto-ABI detection** from multiple sources
-- 🎯 **Contract type detection** (ERC20, ERC721, DeFi, etc.)
-- ⚡ **Quick mode** for rapid iteration
-- 🔍 **Function filtering** (view-only, state-only)
-
-**Examples:**
-```bash
-# Quick ERC20 analysis
-somnia-gas-profiler quick-analyze \
-  --address 0x123... \
-  --standard ERC20
-
-# Ultra-fast mode
-somnia-gas-profiler quick-analyze \
-  --address 0x456... \
-  --quick \
-  --max-functions 5
-
-# Focus on expensive operations
-somnia-gas-profiler quick-analyze \
-  --address 0x789... \
-  --state-only \
-  --runs 10
-```
-
-### `analyze` - Legacy Analysis (Enhanced)
-
-Original command enhanced with new features.
-
-```bash
-somnia-gas-profiler analyze [options]
-```
-
-### `report` - Enhanced Reports
-
-Generate comprehensive reports from profiling results.
-
-```bash
-somnia-gas-profiler report [options]
-```
-
-**New Features:**
-- 🧠 **IO.net AI integration** with `--nl` option
-- 📊 **Enhanced CSV format** with aggregated statistics
-- 📈 **Comparison analysis** with efficiency ratings
-- 💰 **Cost analysis** when STT cost data available
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Create a `.env` file in the project root:
-
-```bash
-# REQUIRED: Testnet private key
-PRIVATE_KEY=your_private_key_here
-
-# REQUIRED: IO.net Intelligence API key for AI analysis
-IOINTELLIGENCE_API_KEY=your_io_net_api_key_here
-
-# Optional: Custom RPC endpoint
-RPC_URL=https://dream-rpc.somnia.network
-
-# Optional: Compilation tool paths
-FOUNDRY_PATH=/path/to/foundry
-DEFAULT_OPTIMIZATION_RUNS=200
-
-# Legacy: OpenAI API key (use IO.net instead)
-OPENAI_API_KEY=your_openai_api_key_here
-```
-
-### IO.net Setup
-
-1. Get your API key from [IO.net](https://io.net)
-2. Add to `.env`: `IOINTELLIGENCE_API_KEY=your_key_here`
-3. Verify: `somnia-gas-profiler quick-analyze --address 0x123... --standard ERC20`
-
-See [docs/io-net-setup.md](docs/io-net-setup.md) for detailed setup instructions.
-
-### Network Information
-
-- **Network**: Somnia Shannon Testnet
-- **Chain ID**: 50312
-- **Default RPC**: `https://dream-rpc.somnia.network`
-- **Explorer**: [Somnia Explorer](https://explorer.somnia.network)
-- **Native Token**: STT (Somnia Test Token)
-- **Current Gas Price**: ~6 gwei (live fetched)
-- **Gas Price Source**: Real-time from blockchain via ethers.js
-
-### Live Gas Price & STT Conversion
-
-🔄 **Real-Time Pricing**: Gas prices are fetched live from the Somnia network
-💰 **STT Cost Calculation**: `cost_in_stt = ethers.formatEther(gas_used * gas_price)`
-📈 **Precision**: 8 decimal places for accurate cost tracking
-⚡ **Live Updates**: Costs adjust automatically with network conditions
-
-## 📊 Enhanced Output Formats
-
-### AI-Powered Analysis
-
-Get intelligent insights powered by IO.net Intelligence API:
-
-```
-🧠 AI Gas Analysis Summary
-─────────────────────────────────────────────────────────
-This ERC20 token contract demonstrates excellent gas efficiency 
-with consistent performance patterns. The transferFrom function 
-shows the highest gas usage due to additional allowance checks, 
-while view functions are optimally implemented.
-
-OPTIMIZATION OPPORTUNITIES:
-1. Consider implementing batch transfer functionality
-2. Review storage layout for gas-efficient access patterns
-3. Optimize event emission for cost reduction
-
-COST ANALYSIS:
-- Average transaction cost: 0.00003456 STT
-- Most expensive: transferFrom (0.00004123 STT)
-- Most efficient: balanceOf (0.00001234 STT)
-```
-
-### Enhanced CSV Format
-
-Comprehensive CSV output with aggregated statistics:
-
+#### CSV Output
 ```csv
-"function_signature","run_number","gas_used","cost_stt","efficiency_rating"
-"transfer(address,uint256)","1","51234","0.00030740","Good"
-"transfer(address,uint256)","2","51456","0.00030874","Good"
-
-"=== AGGREGATED STATISTICS ==="
-"function_signature","total_runs","avg_gas","avg_cost_stt","efficiency_rating"
-"transfer(address,uint256)","3","51345","0.00030807","Good"
+Function,Average Gas,Min Gas,Max Gas,Total Gas,Calls,Cost (STT)
+swap(address,bool,int256,uint160,bytes),85000,80000,90000,850000,10,0.00051000
 ```
 
-## 🤖 AI Features
-
-### IO.net Intelligence Integration
-
-Powered by DeepSeek-R1-0528 model for advanced analysis:
-
-- **Gas Optimization Recommendations**: Specific code improvements
-- **Cost Analysis**: STT token cost projections and budgeting
-- **Best Practices**: Solidity optimization patterns
-- **Production Readiness**: Deployment and scaling insights
-- **Security Considerations**: Gas-related security patterns
-
-### Analysis Types
-
-- **Basic Analysis**: General efficiency assessment
-- **Optimization Focus**: Specific improvement opportunities  
-- **Cost Analysis**: Detailed STT cost breakdown
-- **Comparison Analysis**: Before/after optimization insights
-- **Deployment Analysis**: Production readiness assessment
-
-### Automatic Features
-
-- **Contract Type Detection**: ERC20, ERC721, DeFi, Proxy, MultiSig
-- **Smart Argument Generation**: Realistic test data for functions
-- **ABI Auto-Detection**: From bytecode metadata, verification services
-- **Function Classification**: View vs state-changing operations
-- **Gas Efficiency Rating**: Automatic performance scoring
-
-## 🎯 Advanced Workflows
-
-### Development Cycle
-
-```bash
-# 1. Initial analysis during development
-somnia-gas-profiler compile-and-profile --source MyContract.sol --output initial.json
-
-# 2. Optimize and recompile
-somnia-gas-profiler compile-and-profile --source MyContract.sol --optimization-runs 1000 --output optimized.json
-
-# 3. Compare results
-somnia-gas-profiler report --in initial.json --compare optimized.json
-
-# 4. Get AI recommendations
-somnia-gas-profiler report --in optimized.json --nl
-```
-
-### Multi-Contract Analysis
-
-```bash
-# Analyze entire project
-for contract in contracts/*.sol; do
-  echo "Analyzing $contract"
-  somnia-gas-profiler compile-and-profile --source "$contract" --output "analysis_$(basename $contract .sol).json"
-done
-```
-
-### CI/CD Integration
-
-```yaml
-# .github/workflows/gas-analysis.yml
-- name: Gas Analysis
-  env:
-    PRIVATE_KEY: ${{ secrets.TEST_PRIVATE_KEY }}
-    IOINTELLIGENCE_API_KEY: ${{ secrets.IO_NET_API_KEY }}
-  run: |
-    somnia-gas-profiler compile-and-profile --source contracts/MyContract.sol
-```
-
-## 📚 Documentation
-
-- **[USAGE.md](USAGE.md)** - Comprehensive usage guide
-- **[EXAMPLES.md](EXAMPLES.md)** - Detailed examples for all scenarios
-- **[docs/io-net-setup.md](docs/io-net-setup.md)** - IO.net API configuration
-- **[sample-outputs/](sample-outputs/)** - Example CSV and analysis outputs
-
-## 🔧 Development
-
-### Project Structure
+## 🏗️ Project Structure
 
 ```
 somnia-gas-profiler/
-├── cli/
-│   ├── index.js              # Main CLI entry
-│   ├── profile.js            # Enhanced profile command
-│   ├── compile-and-profile.js # Compilation workflow
-│   └── quick-analyze.js      # Fast analysis
-├── lib/
-│   ├── io-net-client.js      # IO.net API integration
-│   ├── bytecode-processor.js # Bytecode handling
-│   ├── contract-compiler.js  # Solidity compilation
-│   ├── abi-extractor.js      # ABI detection
-│   ├── csv-exporter.js       # Enhanced CSV export
-│   └── nl-analyzer.js        # Natural language analysis
-├── profiler/index.js         # Core profiling logic
-├── reporter/index.js         # Report generation
-├── sample-outputs/           # Example outputs
-└── docs/                     # Documentation
+├── cli/                    # Command-line interface
+├── lib/                    # Core libraries
+│   ├── somnia-abi-fetcher.js    # ABI fetching from Somnia Explorer
+│   ├── developer-analyzer.js    # Developer-focused analysis
+│   ├── gas-profiler.js          # Main profiling engine
+│   └── abi-extractor.js         # ABI processing utilities
+├── test/                   # Test suite (mocha/chai)
+├── examples/               # Usage examples
+├── docs/                   # Documentation
+├── contracts/              # Sample contracts
+└── scripts/                # Utility scripts
 ```
 
-### Enhanced NPM Scripts
+## 🧪 Testing
 
 ```bash
-npm run profile              # Enhanced profile command
-npm run compile-and-profile  # Compilation workflow
-npm run quick-analyze        # Fast analysis
-npm test                     # Run test suite
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run specific test file
+npx mocha test/profiler.spec.js
 ```
 
-## Troubleshooting
+## 📈 Example Workflow
+
+```bash
+# 1. Quick analysis of a smart contract
+npm run quick-analyze -- --address 0x0162e6f939C58ac4b4FEB4C65E15CB31bd178789
+
+# 2. Generate detailed CSV report
+npm run report -- --in profiling_*.json --format csv --out contract-analysis.csv
+
+# 3. Focus on specific functions
+npm run analyze -- --address 0x123... --functions "transfer,approve,mint"
+
+# 4. Gasless analysis (no transactions)
+npm run analyze -- --address 0x123... --gasless
+```
+
+## ⚙️ Configuration
+
+### Environment Variables
+
+Create a `.env` file based on `.env.example`:
+
+```env
+# Somnia Network Configuration
+SOMNIA_RPC_URL=https://somnia-devnet.io
+SOMNIA_PRIVATE_KEY=your_private_key_here
+SOMNIA_EXPLORER_URL=https://shannon-explorer.somnia.network
+
+# Gas Configuration
+DEFAULT_GAS_PRICE=6000000000
+DEFAULT_GAS_LIMIT=8000000
+
+# Analysis Configuration
+MAX_FUNCTION_CALLS=10
+ANALYSIS_TIMEOUT=300000
+```
+
+### Network Configuration
+
+The tool supports multiple Somnia network configurations:
+
+- **Somnia Devnet**: Default development network
+- **Somnia Testnet**: Public test network
+- **Custom RPC**: Configure your own endpoint
+
+## 🔧 Advanced Usage
+
+### Custom ABI Sources
+
+```bash
+# Use local ABI file
+npm run analyze -- --address 0x123... --abi ./contracts/MyContract.json
+
+# Force verified contract ABI only
+npm run analyze -- --address 0x123... --require-verified
+
+# Allow minimal ABI generation
+npm run analyze -- --address 0x123... --allow-minimal
+```
+
+### Batch Analysis
+
+```bash
+# Analyze multiple contracts
+npm run analyze -- --batch ./contract-list.json
+
+# Generate comparative report
+npm run report -- --compare --in profiling_*.json
+```
+
+## 📚 API Reference
+
+### SomniaABIFetcher
+
+```javascript
+const { SomniaABIFetcher } = require('./lib/somnia-abi-fetcher');
+
+const fetcher = new SomniaABIFetcher();
+const result = await fetcher.fetchAndValidateABI(contractAddress);
+```
+
+### DeveloperAnalyzer
+
+```javascript
+const { DeveloperAnalyzer } = require('./lib/developer-analyzer');
+
+const analyzer = new DeveloperAnalyzer();
+const analysis = analyzer.analyzeGasProfile(profilingData, contractAddress);
+```
+
+## 🚨 Troubleshooting
 
 ### Common Issues
 
-**"Failed to initialize Somnia connection"**
-- Check your RPC endpoint is accessible
-- Verify network connectivity
-- Ensure Somnia testnet is operational
+**ABI Fetch Failed**
+```bash
+# Check contract verification status
+npm run analyze -- --address 0x123... --debug
 
-**"Contract validation failed"**
-- Verify the contract address is correct
-- Ensure the contract is deployed on Somnia testnet
-- Check that the ABI matches the deployed contract
+# Use manual ABI file
+npm run analyze -- --address 0x123... --abi ./contract.json
+```
 
-**"Function not found in ABI"**
-- Verify function signature format: `functionName(param1Type,param2Type)`
-- Ensure the function exists in the provided ABI
-- Check for typos in function names or parameter types
+**High Gas Usage**
+```bash
+# Enable gasless mode for large contracts
+npm run analyze -- --address 0x123... --gasless
 
-**"Insufficient funds for gas"**
-- Ensure your wallet has enough testnet ETH
-- Get testnet ETH from [Somnia Faucet](https://faucet.somnia.network)
+# Limit function calls
+npm run analyze -- --address 0x123... --max-calls 5
+```
 
-### Getting Help
+**Network Connection Issues**
+```bash
+# Check .env configuration
+# Verify RPC endpoint accessibility
+# Ensure private key has sufficient balance
+```
 
-- 📖 [Enhanced Documentation](USAGE.md)
-- 🤖 [IO.net Setup Guide](docs/io-net-setup.md) 
-- 📝 [Examples & Recipes](EXAMPLES.md)
-- 🐛 [Report Issues](https://github.com/Codex-zero-source/Somnia-Gas-Profiler/issues)
-- 💬 [Somnia Discord](https://discord.gg/somnia)
-- 📧 [Support Email](mailto:support@somnia.network)
+## 🤝 Contributing
 
-## 🚀 Roadmap
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
-- **Phase P5**: Comprehensive testing & benchmarks
-- **Future**: Multi-network support, advanced AI models
-- **Integration**: IDE plugins, browser extensions
-- **Analytics**: Historical gas tracking, trend analysis
+### Development Setup
 
-## Contributing
+```bash
+git clone https://github.com/somnia/gas-profiler.git
+cd gas-profiler
+npm install
+npm test
+```
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+## 📄 License
 
-## License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-MIT License - see [LICENSE](LICENSE) for details.
+## 🆘 Support
+
+- **Documentation**: [docs/](./docs/)
+- **Examples**: [examples/](./examples/)
+- **Issues**: [GitHub Issues](https://github.com/somnia/gas-profiler/issues)
+- **Discord**: [Somnia Community](https://discord.gg/somnia)
+
+## 🎯 Roadmap
+
+- [ ] Multi-network support
+- [ ] Gas optimization suggestions
+- [ ] Integration with popular IDEs
+- [ ] Historical gas trend analysis
+- [ ] Automated CI/CD integration
 
 ---
 
-**Somnia Gas Profiler v2.0** - Built with ❤️ for developers, powered by AI, optimized for Somnia.
-
-*Achieve gas optimization excellence with minimal effort.*
+**Made with ❤️ for the Somnia blockchain ecosystem**

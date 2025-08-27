@@ -4,7 +4,7 @@ const { ethers } = require('ethers');
 
 const { ContractCompiler } = require('../lib/contract-compiler');
 const { BytecodeProcessor } = require('../lib/bytecode-processor');
-const { IONetClient } = require('../lib/io-net-client');
+const { DeveloperAnalyzer } = require('../lib/developer-analyzer');
 const profiler = require('../profiler');
 
 /**
@@ -21,7 +21,7 @@ async function compileAndProfile(options) {
     
     const compiler = new ContractCompiler();
     const bytecodeProcessor = new BytecodeProcessor(provider, wallet);
-    const ioNetClient = new IONetClient();
+    const developerAnalyzer = new DeveloperAnalyzer();
 
     // Check available compilation tools
     await compiler.displayAvailableTools();
@@ -93,16 +93,16 @@ async function compileAndProfile(options) {
     // Generate reports
     await generateReports(profilingConfig, contractName, compilation, contractType);
 
-    // Generate natural language analysis
-    if (ioNetClient.isConfigured()) {
-      await generateCompilationAnalysis(profilingConfig.out, ioNetClient, contractData.address, {
+    // Generate developer-focused analysis
+    if (developerAnalyzer) {
+      await generateCompilationAnalysis(profilingConfig.out, developerAnalyzer, contractData.address, {
         contractName,
         contractType,
         compiler: compilation.compiler,
         optimizationRuns: compilationOptions.optimizationRuns
       });
     } else {
-      console.log(chalk.yellow('\n⚠️  IO.net API not configured. Set IOINTELLIGENCE_API_KEY for AI analysis.'));
+      console.log(chalk.yellow('\n⚠️  Developer analysis not available.'));
     }
 
     // Display completion summary
@@ -147,30 +147,30 @@ async function generateReports(profilingConfig, contractName, compilation, contr
 }
 
 /**
- * Generate natural language analysis specific to compilation
+ * Generate developer-focused analysis specific to compilation
  */
-async function generateCompilationAnalysis(jsonFile, ioNetClient, contractAddress, metadata) {
+async function generateCompilationAnalysis(jsonFile, developerAnalyzer, contractAddress, metadata) {
   try {
-    console.log(chalk.blue('\n🤖 Generating compilation-specific AI analysis...'));
+    console.log(chalk.blue('\n🔍 Generating compilation-specific analysis...'));
     
     const fs = require('fs').promises;
     const profilingData = JSON.parse(await fs.readFile(jsonFile, 'utf8'));
     
-    // Enhanced prompt for compilation analysis
-    const analysis = await ioNetClient.analyzeGasProfile(profilingData, contractAddress);
+    const analysis = developerAnalyzer.analyzeGasProfile(profilingData, contractAddress);
     
     // Display analysis with compilation context
-    console.log(chalk.cyan('\n🧠 AI Analysis - Compilation & Gas Optimization'));
+    console.log(chalk.cyan('\n🧠 Developer Analysis - Compilation & Gas Optimization'));
     console.log(chalk.gray('─'.repeat(65)));
     console.log(chalk.white(`Contract: ${metadata.contractName}`));
     console.log(chalk.white(`Type: ${metadata.contractType}`));
     console.log(chalk.white(`Compiler: ${metadata.compiler}`));
     console.log(chalk.white(`Optimization: ${metadata.optimizationRuns} runs`));
     console.log(chalk.gray('─'.repeat(65)));
-    console.log(chalk.white(analysis));
+    
+    developerAnalyzer.displayAnalysis(analysis);
 
   } catch (error) {
-    console.log(chalk.yellow(`⚠️  AI analysis failed: ${error.message}`));
+    console.log(chalk.yellow(`⚠️  Analysis failed: ${error.message}`));
   }
 }
 

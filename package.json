@@ -1,7 +1,7 @@
 {
   "name": "somnia-gas-profiler",
   "version": "1.0.0",
-  "description": "Somnia Gas Profiler v2.0 - High-performance developer tool with AI-powered analysis, bytecode processing, and simplified CLI for Somnia network smart contracts",
+  "description": "Professional gas profiling and analysis tool for Somnia blockchain smart contracts with advanced developer insights and automated ABI fetching",
   "main": "cli/index.js",
   "bin": {
     "somnia-gas-profiler": "./cli/index.js"
@@ -22,18 +22,18 @@
   "keywords": [
     "somnia",
     "blockchain",
-    "gas",
-    "profiler",
+    "gas-profiling",
+    "gas-optimization",
     "ethereum",
     "evm",
     "smart-contracts",
-    "cli",
-    "bytecode",
-    "io-net",
-    "ai-analysis",
+    "cli-tool",
+    "bytecode-analysis",
+    "developer-tools",
     "solidity",
+    "hardhat",
     "foundry",
-    "hardhat"
+    "web3"
   ],
   "author": "Somnia Gas Profiler Team",
   "license": "MIT",
@@ -47,12 +47,12 @@
     "table": "^6.8.1",
     "chalk": "^4.1.2",
     "dotenv": "^16.3.1",
-    "openai": "^4.20.1",
     "axios": "^1.6.0"
   },
   "devDependencies": {
     "mocha": "^10.2.0",
-    "chai": "^4.3.10"
+    "chai": "^4.3.10",
+    "sinon": "^17.0.0"
   },
   "repository": {
     "type": "git",

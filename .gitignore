@@ -128,11 +128,39 @@ sample-*.csv
 *-results.json
 *-report.*
 
+# Profiling outputs and results
+profiling_*.json
+profiling_*.csv
+profiling-*.json
+profiling-*.csv
+
+# Quick analysis and debug files
+quick_analysis_*.json
+quick_analysis_*.csv
+debug-api-response-*.json
+debug-html-response-*.json
+
+# Debug and temporary test files
+debug-*.js
+debug-*.json
+debug-*.html
+debug-*.txt
+fetched-*.json
+test-*.js
+*-summary.txt
+
+# ABI fetcher temporary outputs
+fetched-abi-*.json
+fetched-metadata-*.json
+debug-api-response-*.json
+
 # Temporary analysis outputs
 deployed-contract-results.json
 social-media-analysis.json
 social-media-contract-data.csv
 social-media-contract-full-report.json
+example-stt-costs.js
+abi-fetch-results-summary.txt
 
 # Large documentation files that may be regenerated
 *.pdf

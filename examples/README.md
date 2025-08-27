@@ -75,33 +75,32 @@ npx somnia-gas-profiler report \
   --compare large-value.json
 ```
 
-### AI-Powered Analysis
+### Enhanced Analysis
 
 ```bash
-# Generate natural language summary (requires OPENAI_API_KEY)
-export OPENAI_API_KEY=your_openai_api_key
-
+# Generate developer analysis with optimization insights
 npx somnia-gas-profiler analyze \
   --address 0xYourContractAddress \
   --abi ./examples/SimpleStorage.json \
   --fn "set(uint256)" "get()" "increment()" "add(uint256)" \
   --args '[42]' '[]' '[]' '[10]' \
-  --runs 5
+  --runs 5 \
+  --verbose
 
-npx somnia-gas-profiler report --nl --format table
+npx somnia-gas-profiler report --format table
 ```
 
-### Gasless Simulation
+### Intelligent Gasless Simulation
 
 ```bash
-# Test gasless patterns (experimental)
+# Test with enhanced gasless patterns
 npx somnia-gas-profiler analyze \
   --address 0xYourContractAddress \
   --abi ./examples/SimpleStorage.json \
   --fn "set(uint256)" \
-  --args '[42]' \
   --gasless \
-  --runs 3
+  --runs 3 \
+  --verbose
 ```
 
 ## Expected Gas Usage Patterns

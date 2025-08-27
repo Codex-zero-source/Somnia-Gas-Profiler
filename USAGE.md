@@ -1,6 +1,6 @@
-# IO.net Enhanced Somnia Gas Profiler v2.0 - Usage Guide
+# Somnia Gas Profiler v1.0 - Usage Guide
 
-The enhanced Somnia Gas Profiler provides powerful tools for analyzing smart contract gas usage with minimal input requirements and AI-powered insights.
+The Somnia Gas Profiler provides powerful tools for analyzing smart contract gas usage with minimal input requirements and intelligent contract analysis.
 
 ## 🚀 Quick Start
 
@@ -22,8 +22,7 @@ cp .env.example .env
 ```
 
 **Required:**
-- `PRIVATE_KEY`: Test wallet private key
-- `IOINTELLIGENCE_API_KEY`: IO.net API key for AI analysis
+- `PRIVATE_KEY`: Test wallet private key (for gasless simulation and deployment)
 
 ### Basic Usage
 ```
@@ -206,16 +205,14 @@ somnia-gas-profiler report --in <results.json> [options]
 
 **Analysis Options:**
 - `--sort <avg|min|max|total>`: Sort results
-- `--nl`: Generate natural language summary
 - `--compare <file2.json>`: Compare with another result
 
 **Examples:**
 ```
-# Generate table with AI analysis
+# Generate table with developer analysis
 somnia-gas-profiler report \
   --in profiling_results.json \
-  --format table \
-  --nl
+  --format table
 
 # Export to Excel-compatible CSV
 somnia-gas-profiler report \
@@ -252,14 +249,14 @@ Automatically generates realistic test arguments based on:
 - Common usage scenarios
 - Solidity best practices
 
-### AI-Powered Analysis
+### Intelligent Contract Analysis
 
-Integrates with IO.net Intelligence API to provide:
+Provides automated contract analysis including:
+- Contract type detection (ERC20, ERC721, DeFi, etc.)
+- Smart argument generation based on contract state
 - Gas optimization recommendations
 - Cost analysis and projections
-- Security consideration insights
-- Best practices compliance
-- Production readiness assessment
+- Access control pattern recognition
 
 ### Multi-Format Output
 
@@ -342,10 +339,10 @@ Integrates with IO.net Intelligence API to provide:
 - Verify contract syntax
 - Install required compilation tools (Foundry/Hardhat)
 
-**\"IO.net API error\"**
-- Verify `IOINTELLIGENCE_API_KEY` in .env
-- Check internet connection
-- Use `--skip-ai` to disable AI analysis
+**\"Analysis failed\"**
+- Check contract address validity
+- Verify ABI format and completeness
+- Try using `--allow-minimal` for bytecode analysis
 
 **\"Contract not found\"**
 - Verify contract address

@@ -2,8 +2,9 @@ const chalk = require('chalk');
 const { ethers } = require('ethers');
 
 const { ABIExtractor } = require('../lib/abi-extractor');
+const { SomniaABIFetcher } = require('../lib/somnia-abi-fetcher');
 const { BytecodeProcessor } = require('../lib/bytecode-processor');
-const { IONetClient } = require('../lib/io-net-client');
+const { DeveloperAnalyzer } = require('../lib/developer-analyzer');
 const profiler = require('../profiler');
 
 /**
@@ -25,7 +26,7 @@ async function quickAnalyze(options) {
     
     const abiExtractor = new ABIExtractor();
     const bytecodeProcessor = new BytecodeProcessor(provider, wallet);
-    const ioNetClient = new IONetClient();
+    const developerAnalyzer = new DeveloperAnalyzer();
 
     // Display connection info
     console.log(chalk.gray(`🌐 Connected to: ${options.rpc || 'https://dream-rpc.somnia.network'}`));
@@ -51,16 +52,22 @@ async function quickAnalyze(options) {
     const contractAnalysis = analyzeContract(abi, code, bytecodeProcessor);
     displayContractAnalysis(contractAnalysis);
 
-    // Generate test arguments
-    const testArgs = bytecodeProcessor.generateTestArguments(abi, contractAnalysis.type);
-
-    // Determine functions to profile
+    // Determine functions to profile first
     const functionsToProfile = selectFunctionsToProfile(abi, options);
     
     if (functionsToProfile.length === 0) {
       console.log(chalk.yellow('⚠️  No suitable functions found for profiling'));
       return;
     }
+
+    // Generate test arguments
+    const testArgsData = await bytecodeProcessor.generateTestArguments(abi, contractAnalysis.type, options.address, functionsToProfile);
+    
+    // Extract arguments for profiling config
+    const testArgs = functionsToProfile.map(signature => {
+      const argData = testArgsData.testArgs[signature];
+      return argData ? argData.args : [];
+    });
 
     console.log(chalk.blue(`\n⚡ Profiling ${functionsToProfile.length} functions...\n`));
 
@@ -71,7 +78,7 @@ async function quickAnalyze(options) {
       address: options.address,
       abi: JSON.stringify(abi),
       fn: functionsToProfile,
-      args: functionsToProfile.map(func => JSON.stringify(testArgs[func] || [])),
+      args: testArgs.map(args => JSON.stringify(args)),
       runs: options.runs || (options.quick ? 2 : 3),
       out: options.output || `quick_analysis_${timestamp}.json`,
       gasless: options.gasless || true, // Default to gasless for quick analysis
@@ -83,11 +90,22 @@ async function quickAnalyze(options) {
     // Generate immediate analysis
     await generateQuickReports(profilingConfig, contractAnalysis);
 
-    // Generate AI analysis if available
-    if (ioNetClient.isConfigured() && !options.skipAI) {
-      await generateQuickAIAnalysis(profilingConfig.out, ioNetClient, options.address, contractAnalysis);
-    } else if (!options.skipAI) {
-      console.log(chalk.yellow('\n⚠️  IO.net API not configured. Set IOINTELLIGENCE_API_KEY for AI analysis.'));
+    // Generate developer-focused analysis
+    if (developerAnalyzer && !options.skipAnalysis) {
+      // Create a simplified contract analysis object
+      const simplifiedContractAnalysis = {
+        type: contractAnalysis.type,
+        complexity: contractAnalysis.complexity,
+        totalFunctions: contractAnalysis.totalFunctions,
+        viewFunctions: contractAnalysis.viewFunctions,
+        stateChangingFunctions: contractAnalysis.stateChangingFunctions,
+        events: contractAnalysis.events,
+        bytecodeSize: contractAnalysis.bytecodeSize
+      };
+      
+      await generateQuickAnalysis(profilingConfig.out, developerAnalyzer, options.address, simplifiedContractAnalysis);
+    } else if (!options.skipAnalysis) {
+      console.log(chalk.yellow('\n⚠️  Developer analysis not available.'));
     }
 
     // Display completion summary
@@ -116,18 +134,35 @@ async function loadContractABI(options, abiExtractor, bytecode) {
     }
   }
 
-  // Try auto-detection if no ABI provided or file load failed
+  // Try Somnia explorer ABI fetching if no ABI provided
   if (!abi) {
     console.log(chalk.blue('🕵️  Attempting ABI auto-detection...'));
     
-    abi = await abiExtractor.autoDetectABI({
-      address: options.address,
-      bytecode: bytecode,
-      standard: options.standard
-    });
+    try {
+      const abiReader = new SomniaABIFetcher();
+      const result = await abiReader.fetchAndValidateABI(options.address, {
+        allowMinimal: options.allowMinimal !== false,
+        requireVerified: options.requireVerified || false
+      });
+      
+      if (result && result.abi) {
+        abi = result.abi;
+        console.log(chalk.green(`✅ ABI fetched from Somnia explorer (${result.metadata.source})`));
+        console.log(chalk.gray(`   Functions: ${result.metadata.functionCount}, Verified: ${result.metadata.isVerified}`));
+      }
+    } catch (explorerError) {
+      console.log(chalk.yellow(`⚠️  Somnia explorer fetch failed: ${explorerError.message}`));
+      
+      // Fallback to local auto-detection
+      abi = await abiExtractor.autoDetectABI({
+        address: options.address,
+        bytecode: bytecode,
+        standard: options.standard
+      });
 
-    if (abi) {
-      console.log(chalk.green('✅ ABI auto-detected'));
+      if (abi) {
+        console.log(chalk.green('✅ ABI auto-detected from bytecode'));
+      }
     }
   }
 
@@ -140,7 +175,7 @@ async function loadContractABI(options, abiExtractor, bytecode) {
   }
 
   // Generate minimal ABI from bytecode if all else fails
-  if (!abi && options.allowMinimal) {
+  if (!abi && options.allowMinimal !== false) {
     console.log(chalk.yellow('⚠️  Generating minimal ABI from bytecode analysis...'));
     const selectors = bytecodeProcessor.extractFunctionSelectors(bytecode);
     abi = abiExtractor.generateMinimalABI(selectors.map(s => `function_${s}()`));
@@ -157,6 +192,7 @@ async function loadContractABI(options, abiExtractor, bytecode) {
  * Analyze contract structure and characteristics
  */
 function analyzeContract(abi, bytecode, bytecodeProcessor) {
+  const abiExtractor = new ABIExtractor();
   const functions = abiExtractor.extractFunctions(abi);
   const viewFunctions = abiExtractor.extractViewFunctions(abi);
   const stateChanging = abiExtractor.extractStateChangingFunctions(abi);
@@ -205,9 +241,14 @@ function displayContractAnalysis(analysis) {
 function selectFunctionsToProfile(abi, options) {
   const abiExtractor = new (require('../lib/abi-extractor')).ABIExtractor();
   
-  // If specific functions requested
+  // If specific functions requested as comma-separated list
   if (options.functions && options.functions.length > 0) {
-    return options.functions;
+    // Handle both array and string inputs
+    const functions = Array.isArray(options.functions) 
+      ? options.functions 
+      : options.functions.split(',').map(f => f.trim());
+    
+    return functions;
   }
 
   // Smart selection based on analysis mode
@@ -229,10 +270,12 @@ function selectFunctionsToProfile(abi, options) {
   const limit = options.quick ? 5 : (options.maxFunctions || 10);
   candidates = candidates.slice(0, limit);
 
-  return candidates.map(func => {
+  const selectedFunctions = candidates.map(func => {
     const inputs = func.inputs.map(input => input.type).join(',');
     return `${func.name}(${inputs})`;
   });
+
+  return selectedFunctions;
 }
 
 /**
@@ -268,27 +311,46 @@ async function generateQuickReports(profilingConfig, contractAnalysis) {
 }
 
 /**
- * Generate quick AI analysis
+ * Generate quick developer analysis
  */
-async function generateQuickAIAnalysis(jsonFile, ioNetClient, contractAddress, contractAnalysis) {
+async function generateQuickAnalysis(jsonFile, developerAnalyzer, contractAddress, contractAnalysis) {
   try {
-    console.log(chalk.blue('\n🤖 Generating quick AI insights...'));
+    console.log(chalk.blue('\n🔍 Generating quick developer insights...'));
     
     const fs = require('fs').promises;
     const profilingData = JSON.parse(await fs.readFile(jsonFile, 'utf8'));
     
-    const analysis = await ioNetClient.analyzeGasProfile(profilingData, contractAddress);
+    const analysis = developerAnalyzer.analyzeGasProfile(profilingData, contractAddress, contractAnalysis);
     
-    // Display quick AI summary
-    console.log(chalk.cyan('\n🧠 Quick AI Analysis'));
-    console.log(chalk.gray('─'.repeat(50)));
-    console.log(chalk.white(`Contract Type: ${contractAnalysis.type}`));
-    console.log(chalk.white(`Complexity: ${contractAnalysis.complexity}`));
-    console.log(chalk.gray('─'.repeat(50)));
-    console.log(chalk.white(analysis));
-
+    // Add functionality to ask whether to save verbose output
+    const readline = require('readline').createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+    
+    const answer = await new Promise(resolve => {
+      readline.question(
+        chalk.yellow('\n💡 Do you want to save the full analysis to a file? (y/N): '),
+        resolve
+      );
+    });
+    
+    readline.close();
+    
+    if (answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes') {
+      const outputFileName = `${contractAddress.replace('0x', '')}-analysis.txt`;
+      const fullOutput = developerAnalyzer.displayAnalysis(analysis, true);
+      
+      await fs.writeFile(outputFileName, fullOutput);
+      console.log(chalk.green(`\n📄 Full analysis saved to ${outputFileName}`));
+      console.log(chalk.gray('   You can view the full details in the file'));
+    }
+    
+    // Always display the concise version in terminal
+    developerAnalyzer.displayAnalysis(analysis);
+    
   } catch (error) {
-    console.log(chalk.yellow(`⚠️  AI analysis failed: ${error.message}`));
+    console.log(chalk.yellow(`\n⚠️  Analysis failed: ${error.message}`));
   }
 }
 

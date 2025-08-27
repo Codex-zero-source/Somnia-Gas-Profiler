@@ -37,11 +37,11 @@ The **Somnia Gas Profiler** is **production-ready** and can be safely deployed o
 ## 🔧 **Technical Capabilities Verified**
 
 ### Core Functionality
-- ✅ **Smart Contract Analysis** - Successfully analyzes any contract address
-- ✅ **Multi-Function Profiling** - Can analyze multiple functions simultaneously
+- ✅ **Smart Contract Analysis** - Successfully analyzes any contract address with intelligent argument generation
+- ✅ **Multi-Function Profiling** - Can analyze multiple functions simultaneously with enhanced accuracy
 - ✅ **STT Cost Calculation** - Real-time gas price fetching and cost calculation
-- ✅ **Gasless Simulation** - Cost-free testing for expensive operations
-- ✅ **Paymaster Support** - EIP-4337 Account Abstraction compatibility
+- ✅ **Gasless Simulation** - Cost-free testing with intelligent fallback strategies
+- ✅ **Enhanced Analysis** - Contract state analysis and optimization recommendations
 
 ### Network Integration
 - ✅ **Somnia Testnet Connection** - Verified connectivity to `https://dream-rpc.somnia.network`
@@ -54,7 +54,7 @@ The **Somnia Gas Profiler** is **production-ready** and can be safely deployed o
 - ✅ **Comparison Reports** - Before/after optimization analysis
 - ✅ **Statistical Analysis** - Min/max/average gas usage tracking
 - ✅ **Cost Analysis** - STT equivalent cost calculations
-- ✅ **Natural Language Reports** - AI-powered summaries (when OpenAI key provided)
+- ✅ **Developer Analysis** - Intelligent categorization and optimization suggestions
 
 ---
 
@@ -189,13 +189,13 @@ OPENAI_API_KEY=<openai_key_for_ai_summaries>
 - ✅ **Cost Optimization** - Smart contract improvement guidance
 
 ### Professional Reporting
-- ✅ **Executive Summaries** - Business-ready reports
+- ✅ **Developer Analysis** - Business-ready analysis reports
 - ✅ **Technical Deep Dives** - Developer-focused analysis
 - ✅ **Comparative Analysis** - Before/after optimization reports
-- ✅ **Export Formats** - JSON, CSV, PDF-ready tables
+- ✅ **Export Formats** - JSON, CSV, formatted tables
 
 ### Enterprise Features
-- ✅ **Paymaster Integration** - Account Abstraction support
+- ✅ **Enhanced Gasless Mode** - Advanced simulation capabilities
 - ✅ **Cost Budgeting** - Transaction cost planning
 - ✅ **Historical Tracking** - Long-term cost trend analysis
 - ✅ **Multi-Network Support** - Ready for Somnia mainnet
