@@ -1,28 +1,14 @@
 const redis = require('redis');
 
-// Redis configuration
-const REDIS_CONFIG = {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: process.env.REDIS_PORT || 6379,
-  password: process.env.REDIS_PASSWORD || undefined,
-  db: process.env.REDIS_DB || 0,
-  retryDelayOnFailover: 100,
-  enableReadyCheck: false,
-  maxRetriesPerRequest: null,
-};
-
 // Create Redis client
-const createRedisClient = () => {
+const createRedisClient = async () => {
   const client = redis.createClient({
-    socket: {
-      host: REDIS_CONFIG.host,
-      port: REDIS_CONFIG.port,
-    },
-    password: REDIS_CONFIG.password,
-    database: REDIS_CONFIG.db,
+    url: process.env.REDIS_URL || `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`,
+    password: process.env.REDIS_PASSWORD || undefined,
+    database: process.env.REDIS_DB || 0,
   });
 
-  // Error handling
+  // Event listeners
   client.on('error', (err) => {
     console.error('Redis Client Error:', err);
   });
@@ -38,6 +24,12 @@ const createRedisClient = () => {
   client.on('end', () => {
     console.log('Redis connection ended');
   });
+
+  client.on('reconnecting', () => {
+    console.log('Reconnecting to Redis...');
+  });
+
+  await client.connect(); // <-- required for redis@4
 
   return client;
 };
@@ -64,5 +56,4 @@ module.exports = {
   createRedisClient,
   REDIS_KEYS,
   TTL,
-  REDIS_CONFIG,
 };
