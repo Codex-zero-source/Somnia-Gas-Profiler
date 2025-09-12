@@ -1,0 +1,11 @@
+[profile.default]
+src = 'src'
+out = 'out'
+libs = ['lib']
+solc = "0.8.20"
+
+[rpc_endpoints]
+somnia = "https://dream-rpc.somnia.network"
+
+[etherscan]
+somnia = { key = "", url = "https://shannon-explorer.somnia.network/api" }
