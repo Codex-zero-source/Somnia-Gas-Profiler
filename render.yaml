@@ -1,0 +1,45 @@
+services:
+  # Backend API Service
+  - type: web
+    name: somnia-gas-profiler-api
+    env: node
+    plan: starter
+    buildCommand: cd api && npm install
+    startCommand: cd api && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: somnia-gas-profiler-redis
+          property: connectionString
+      - key: PRIVATE_KEY
+        sync: false
+      - key: RPC_URL
+        value: https://dream-rpc.somnia.network
+    healthCheckPath: /api/health
+
+  # Frontend Service
+  - type: web
+    name: somnia-gas-profiler-frontend
+    env: node
+    plan: starter
+    buildCommand: cd webapp/gas-profiler && npm install && npm run build
+    startCommand: cd webapp/gas-profiler && npm run preview
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: somnia-gas-profiler-api
+          envVarKey: RENDER_EXTERNAL_URL
+
+  # Redis Database
+  - type: redis
+    name: somnia-gas-profiler-redis
+    plan: starter
+    maxmemoryPolicy: allkeys-lru

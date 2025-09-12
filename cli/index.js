@@ -83,9 +83,9 @@ const argv = yargs(hideBin(process.argv))
       await analyze(argv);
       
       // Export to Redis if requested
-      if (argv.exportRedis) {
+      if (argv.exportRedis || argv['export-redis']) {
         console.log(chalk.blue('\n📤 Exporting results to Redis...'));
-        const exporter = new RedisExporter(argv.redisUrl);
+        const exporter = new RedisExporter(argv.redisUrl || argv['redis-url']);
         const connected = await exporter.connect();
         if (connected) {
           await exporter.exportResults(argv.out);
@@ -163,9 +163,9 @@ const argv = yargs(hideBin(process.argv))
       await compileAndProfile(argv);
       
       // Export to Redis if requested
-      if (argv.exportRedis) {
+      if (argv.exportRedis || argv['export-redis']) {
         console.log(chalk.blue('\n📤 Exporting results to Redis...'));
-        const exporter = new RedisExporter(argv.redisUrl);
+        const exporter = new RedisExporter(argv.redisUrl || argv['redis-url']);
         const connected = await exporter.connect();
         if (connected) {
           await exporter.exportResults(argv.out);
@@ -252,9 +252,9 @@ const argv = yargs(hideBin(process.argv))
       await quickAnalyze(argv);
       
       // Export to Redis if requested
-      if (argv.exportRedis) {
+      if (argv.exportRedis || argv['export-redis']) {
         console.log(chalk.blue('\n📤 Exporting results to Redis...'));
-        const exporter = new RedisExporter(argv.redisUrl);
+        const exporter = new RedisExporter(argv.redisUrl || argv['redis-url']);
         const connected = await exporter.connect();
         if (connected) {
           await exporter.exportResults(argv.out);
@@ -262,7 +262,7 @@ const argv = yargs(hideBin(process.argv))
         }
       }
       
-      console.log(chalk.green('\n✅ Quick analysis completed successfully!'));
+      console.log(chalk.green('\n✅ Profiling completed successfully!'));
     } catch (error) {
       console.error(chalk.red(`\n❌ Quick analysis failed: ${error.message}`));
       process.exit(1);

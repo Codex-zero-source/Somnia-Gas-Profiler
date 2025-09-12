@@ -1,7 +1,7 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 /**
- * Analyze a contract
+ * Analyze a contract (quick analysis)
  */
 export async function analyzeContract(contractAddress) {
   try {
@@ -21,6 +21,31 @@ export async function analyzeContract(contractAddress) {
     return data;
   } catch (error) {
     console.error('Failed to analyze contract:', error);
+    throw error;
+  }
+}
+
+/**
+ * Full contract analysis with CSV output
+ */
+export async function fullAnalyzeContract(contractAddress) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/full-analyze`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ contractAddress }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Failed to perform full contract analysis:', error);
     throw error;
   }
 }

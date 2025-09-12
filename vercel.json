@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/server.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "webapp/gas-profiler/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/server.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/webapp/gas-profiler/dist/$1"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "RPC_URL": "https://dream-rpc.somnia.network"
+  },
+  "functions": {
+    "api/server.js": {
+      "maxDuration": 30
+    }
+  },
+  "installCommand": "npm install && cd api && npm install && cd ../webapp/gas-profiler && npm install",
+  "buildCommand": "cd webapp/gas-profiler && npm run build",
+  "outputDirectory": "webapp/gas-profiler/dist"
+}

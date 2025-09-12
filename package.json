@@ -15,6 +15,14 @@
     "report": "node cli/index.js report",
     "dashboard": "cd dashboard && npm run dev",
     "dashboard:build": "cd dashboard && npm run build",
+    "webapp:dev": "cd webapp/gas-profiler && npm run dev",
+    "webapp:build": "cd webapp/gas-profiler && npm run build",
+    "webapp:preview": "cd webapp/gas-profiler && npm run preview",
+    "api:start": "cd api && npm start",
+    "api:dev": "cd api && npm run dev",
+    "build": "npm run webapp:build",
+    "build:all": "npm install && cd api && npm install && cd ../webapp/gas-profiler && npm install && npm run build",
+    "dev": "concurrently \"npm run api:dev\" \"npm run webapp:dev\"",
     "test": "set NODE_ENV=test && mocha test/**/*.spec.js",
     "test:watch": "mocha test/**/*.spec.js --watch",
     "compile": "hardhat compile",
@@ -54,6 +62,7 @@
   },
   "devDependencies": {
     "chai": "^4.3.10",
+    "concurrently": "^8.2.2",
     "mocha": "^10.2.0",
     "sinon": "^17.0.0"
   },

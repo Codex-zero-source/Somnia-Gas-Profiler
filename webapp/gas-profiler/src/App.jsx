@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { connectWallet, switchToSomniaNetwork, getContract, isValidAddress } from './utils/web3';
-import { analyzeContract, healthCheck } from './services/api';
+import { analyzeContract, fullAnalyzeContract, healthCheck } from './services/api';
 import contractABI from './contracts/AnalysisRegistry.json';
 import { ethers } from 'ethers';
 
@@ -167,7 +167,7 @@ export default function SomniaGasProfiler() {
     setAnalysisResult(null);
 
     try {
-      const result = await analyzeContract(contractAddress);
+      const result = await fullAnalyzeContract(contractAddress);
       
       // The API now returns an object with analysis, cached, timestamp, etc.
       // Ensure we have the expected structure
@@ -382,22 +382,33 @@ export default function SomniaGasProfiler() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
                       <div className="bg-cyan-400 border-4 border-black p-6 shadow-[8px_8px_0px_0px_#000000] relative">
                         <div className="absolute top-2 right-2 w-4 h-4 bg-black animate-pulse"></div>
-                        <h4 className="text-xl font-black text-black mb-3 uppercase tracking-wide">GAS EFFICIENCY</h4>
-                        <p className="text-4xl font-black text-black">85%</p>
+                        <h4 className="text-xl font-black text-black mb-3 uppercase tracking-wide">TOTAL FUNCTIONS</h4>
+                        <p className="text-4xl font-black text-black">
+                          {analysisResult.analysis?.results ? Object.keys(analysisResult.analysis.results).length : 'N/A'}
+                        </p>
                         <div className="absolute bottom-0 left-0 w-full h-1 bg-black"></div>
                       </div>
                       
                       <div className="bg-pink-400 border-4 border-black p-6 shadow-[8px_8px_0px_0px_#000000] relative">
                         <div className="absolute top-2 right-2 w-4 h-4 bg-black animate-pulse"></div>
-                        <h4 className="text-xl font-black text-black mb-3 uppercase tracking-wide">SECURITY GRADE</h4>
-                        <p className="text-4xl font-black text-black">A+</p>
+                        <h4 className="text-xl font-black text-black mb-3 uppercase tracking-wide">AVG GAS USED</h4>
+                        <p className="text-4xl font-black text-black">
+                          {analysisResult.analysis?.results ? 
+                            Math.round(Object.values(analysisResult.analysis.results)
+                              .reduce((sum, func) => sum + (func.aggregated?.avg || 0), 0) / 
+                              Object.keys(analysisResult.analysis.results).length).toLocaleString() : 'N/A'}
+                        </p>
                         <div className="absolute bottom-0 left-0 w-full h-1 bg-black"></div>
                       </div>
                       
                       <div className="bg-yellow-400 border-4 border-black p-6 shadow-[8px_8px_0px_0px_#000000] relative">
                         <div className="absolute top-2 right-2 w-4 h-4 bg-black animate-pulse"></div>
-                        <h4 className="text-xl font-black text-black mb-3 uppercase tracking-wide">OPTIMIZATIONS</h4>
-                        <p className="text-4xl font-black text-black">12</p>
+                        <h4 className="text-xl font-black text-black mb-3 uppercase tracking-wide">TOTAL RUNS</h4>
+                        <p className="text-4xl font-black text-black">
+                          {analysisResult.analysis?.results ? 
+                            Object.values(analysisResult.analysis.results)
+                              .reduce((sum, func) => sum + (func.aggregated?.callCount || 0), 0) : 'N/A'}
+                        </p>
                         <div className="absolute bottom-0 left-0 w-full h-1 bg-black"></div>
                       </div>
                     </div>
@@ -416,6 +427,110 @@ export default function SomniaGasProfiler() {
                       </div>
                     )}
                     
+                    {/* CSV Data Table */}
+                    {(analysisResult.csvData || analysisResult.analysis?.results) && (
+                      <div className="bg-black border-4 border-purple-400 p-6 shadow-[8px_8px_0px_0px_#a855f7] relative mb-8">
+                        <div className="absolute top-2 left-2 flex space-x-2">
+                          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                        </div>
+                        <div className="flex items-center justify-between mb-6">
+                          <h4 className="text-xl font-black text-purple-400 uppercase tracking-wide">GAS ANALYSIS DATA TABLE</h4>
+                          <div className="flex items-center space-x-4">
+                            <span className="text-cyan-400 text-sm font-bold uppercase">CSV FORMAT</span>
+                            <span className="text-yellow-400 text-sm font-bold uppercase">
+                              {new Date(analysisResult.timestamp).toLocaleTimeString()}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="bg-black/80 p-4 border-2 border-purple-400/50 overflow-x-auto">
+                          <div className="mb-4 flex items-center space-x-4">
+                            <span className="text-cyan-400 font-mono">root@somnia:~$</span>
+                            <span className="text-white font-mono">cat gas_analysis.csv</span>
+                          </div>
+                          <div className="overflow-x-auto">
+                            {analysisResult.csvData ? (
+                              <table className="w-full text-sm font-mono">
+                                <thead>
+                                  <tr className="border-b-2 border-purple-400/50">
+                                    {analysisResult.csvData.split('\n')[0]?.split(',').map((header, index) => (
+                                      <th key={index} className="text-purple-400 font-black uppercase tracking-wide px-4 py-2 text-left">
+                                        {header.trim().replace(/"/g, '')}
+                                      </th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {analysisResult.csvData.split('\n').slice(1).filter(row => row.trim()).map((row, index) => (
+                                    <tr key={index} className="border-b border-purple-400/20 hover:bg-purple-400/10">
+                                      {row.split(',').map((cell, cellIndex) => (
+                                        <td key={cellIndex} className="text-green-300 px-4 py-2">
+                                          {cell.trim().replace(/"/g, '')}
+                                        </td>
+                                      ))}
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            ) : (
+                              <table className="w-full text-sm font-mono">
+                                <thead>
+                                  <tr className="border-b-2 border-purple-400/50">
+                                    <th className="text-purple-400 font-black uppercase tracking-wide px-4 py-2 text-left">Function</th>
+                                    <th className="text-purple-400 font-black uppercase tracking-wide px-4 py-2 text-left">Min Gas</th>
+                                    <th className="text-purple-400 font-black uppercase tracking-wide px-4 py-2 text-left">Max Gas</th>
+                                    <th className="text-purple-400 font-black uppercase tracking-wide px-4 py-2 text-left">Avg Gas</th>
+                                    <th className="text-purple-400 font-black uppercase tracking-wide px-4 py-2 text-left">Total Runs</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {analysisResult.analysis?.results && Object.entries(analysisResult.analysis.results).map(([funcName, funcData], index) => (
+                                    <tr key={index} className="border-b border-purple-400/20 hover:bg-purple-400/10">
+                                      <td className="text-green-300 px-4 py-2">{funcName}</td>
+                                      <td className="text-green-300 px-4 py-2">{funcData.aggregated?.min?.toLocaleString() || 'N/A'}</td>
+                                      <td className="text-green-300 px-4 py-2">{funcData.aggregated?.max?.toLocaleString() || 'N/A'}</td>
+                                      <td className="text-green-300 px-4 py-2">{funcData.aggregated?.avg?.toLocaleString() || 'N/A'}</td>
+                                      <td className="text-green-300 px-4 py-2">{funcData.aggregated?.callCount || 'N/A'}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* On-Chain Metadata Display */}
+                    {analysisResult.onChainMetadata && (
+                      <div className="bg-black border-4 border-orange-400 p-6 shadow-[8px_8px_0px_0px_#fb923c] relative mb-8">
+                        <div className="absolute top-2 left-2 flex space-x-2">
+                          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                        </div>
+                        <div className="flex items-center justify-between mb-6">
+                          <h4 className="text-xl font-black text-orange-400 uppercase tracking-wide">ON-CHAIN METADATA</h4>
+                          <div className="flex items-center space-x-4">
+                            <span className="text-cyan-400 text-sm font-bold uppercase">BLOCKCHAIN STORED</span>
+                            <span className="text-yellow-400 text-sm font-bold uppercase">
+                              {new Date(analysisResult.timestamp).toLocaleTimeString()}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="bg-black/80 p-4 border-2 border-orange-400/50">
+                          <div className="mb-4 flex items-center space-x-4">
+                            <span className="text-cyan-400 font-mono">root@somnia:~$</span>
+                            <span className="text-white font-mono">cat on_chain_metadata.json</span>
+                          </div>
+                          <pre className="text-orange-300 text-sm font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">
+                            {JSON.stringify(analysisResult.onChainMetadata, null, 2)}
+                          </pre>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Detailed Analysis - Terminal Style */}
                     <div className="bg-black border-4 border-green-400 p-6 shadow-[8px_8px_0px_0px_#00ff41] relative">
                       <div className="absolute top-2 left-2 flex space-x-2">

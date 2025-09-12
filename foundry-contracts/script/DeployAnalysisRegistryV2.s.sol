@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "forge-std/Script.sol";
-import "../src/AnalysisRegistry.sol";
+import "../src/AnalysisRegistryV2.sol";
 
 contract DeployAnalysisRegistryV2 is Script {
     function run() external {
@@ -29,8 +29,8 @@ contract DeployAnalysisRegistryV2 is Script {
         
         vm.startBroadcast(deployerPrivateKey);
 
-        AnalysisRegistry analysisRegistry = new AnalysisRegistry();
-        console.log("AnalysisRegistry deployed at:", address(analysisRegistry));
+        AnalysisRegistryV2 analysisRegistry = new AnalysisRegistryV2();
+        console.log("AnalysisRegistryV2 deployed at:", address(analysisRegistry));
 
         vm.stopBroadcast();
         
