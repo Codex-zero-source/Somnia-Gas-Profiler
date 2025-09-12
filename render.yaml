@@ -43,3 +43,7 @@ services:
     name: somnia-gas-profiler-redis
     plan: starter
     maxmemoryPolicy: allkeys-lru
+    ipAllowList:
+      # Allow all Render services in this environment to connect
+      - source: 0.0.0.0/0
+        description: Allow all (development/test)
