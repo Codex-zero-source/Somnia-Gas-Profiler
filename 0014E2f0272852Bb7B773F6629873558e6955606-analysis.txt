@@ -1,0 +1,40 @@
+Somnia Gas Profiling Report
+==========================
+Contract: 0x0014E2f0272852Bb7B773F6629873558e6955606
+Network: Somnia Testnet
+Functions Analyzed: 7
+Timestamp: 2025-09-12T15:07:31.172Z
+
+Developer Analysis
+-------------------
+Contract Type: Custom
+Complexity: moderate
+Total Functions: 7
+  - View/Pure: 4
+  - State-changing: 3
+Events: 3
+Bytecode: 10258 bytes
+
+Somnia Gas Profiling Results
+==============================
+
+Query Functions
+---------------
+  • getPosts(address) - Very High (1,044,710 gas)
+
+Other Functions
+---------------
+  • createPost(string) - Very High (2,315,782 gas)
+  • isUserFollowing(address,address) - Very High (1,055,071 gas)
+  • isFollowing(address,address) - Very High (1,054,981 gas)
+  • postsByUser(address,uint256) - Excellent (34,566 gas)
+  • unfollow(address) - Excellent (31,451 gas)
+  • follow(address) - Excellent (27,536 gas)
+
+Key Developer Insights
+----------------------
+• Average Gas Usage: 794,871
+• Range: 27,536 - 2,315,782 gas
+• Most Expensive: createPost(string)
+• Most Efficient: follow(address)
+• Total Analysis Cost: 0.10015375 STT

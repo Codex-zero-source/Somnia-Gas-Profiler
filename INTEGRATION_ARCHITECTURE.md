@@ -290,4 +290,8 @@ curl http://localhost:3001/api/cache/stats
 
 This integrated architecture provides a robust, scalable foundation for the Somnia Gas Profiler application. The combination of React frontend, Express API, and Redis caching delivers excellent performance while maintaining code clarity and maintainability.
 
+<<<<<<< HEAD
 The modular design allows for independent scaling and deployment of components, while the comprehensive error handling ensures reliable operation even under adverse conditions.
+=======
+The modular design allows for independent scaling and deployment of components, while the comprehensive error handling ensures reliable operation even under adverse conditions.
+>>>>>>> dapp-smart-contract-integration

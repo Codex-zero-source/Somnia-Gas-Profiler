@@ -80,7 +80,7 @@ async function quickAnalyze(options) {
       fn: functionsToProfile,
       args: testArgs.map(args => JSON.stringify(args)),
       runs: options.runs || (options.quick ? 2 : 3),
-      out: options.output || `quick_analysis_${timestamp}.json`,
+      out: options.out || `quick_analysis_${timestamp}.json`,
       gasless: options.gasless || true, // Default to gasless for quick analysis
       verbose: options.verbose || false
     };
@@ -322,29 +322,13 @@ async function generateQuickAnalysis(jsonFile, developerAnalyzer, contractAddres
     
     const analysis = developerAnalyzer.analyzeGasProfile(profilingData, contractAddress, contractAnalysis);
     
-    // Add functionality to ask whether to save verbose output
-    const readline = require('readline').createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
+    // Automatically save full analysis when called from API or with --export-redis
+    const outputFileName = `${contractAddress.replace('0x', '')}-analysis.txt`;
+    const fullOutput = developerAnalyzer.displayAnalysis(analysis, true);
     
-    const answer = await new Promise(resolve => {
-      readline.question(
-        chalk.yellow('\n💡 Do you want to save the full analysis to a file? (y/N): '),
-        resolve
-      );
-    });
-    
-    readline.close();
-    
-    if (answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes') {
-      const outputFileName = `${contractAddress.replace('0x', '')}-analysis.txt`;
-      const fullOutput = developerAnalyzer.displayAnalysis(analysis, true);
-      
-      await fs.writeFile(outputFileName, fullOutput);
-      console.log(chalk.green(`\n📄 Full analysis saved to ${outputFileName}`));
-      console.log(chalk.gray('   You can view the full details in the file'));
-    }
+    await fs.writeFile(outputFileName, fullOutput);
+     console.log(chalk.green(`\n📄 Full analysis saved to ${outputFileName}`));
+     console.log(chalk.gray('   You can view the full details in the file'));
     
     // Always display the concise version in terminal
     developerAnalyzer.displayAnalysis(analysis);

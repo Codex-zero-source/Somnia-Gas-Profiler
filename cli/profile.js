@@ -2,6 +2,9 @@ const chalk = require('chalk');
 const path = require('path');
 const { ethers } = require('ethers');
 
+// Load environment variables
+require('dotenv').config();
+
 const { BytecodeProcessor } = require('../lib/bytecode-processor');
 const { ContractCompiler } = require('../lib/contract-compiler');
 const { ABIExtractor } = require('../lib/abi-extractor');
@@ -60,7 +63,7 @@ async function profile(options) {
       fn: contractData.functions,
       args: contractData.functions.map(func => JSON.stringify(testArgs[func] || [])),
       runs: options.runs || 3,
-      out: options.output || `profiling_${Date.now()}.json`,
+      out: options.out || `output/profiling_${Date.now()}.json`,
       gasless: shouldUseGasless,
       verbose: options.verbose || false
     };
@@ -242,5 +245,6 @@ async function generateDeveloperAnalysis(jsonFile, developerAnalyzer, contractAd
 }
 
 module.exports = {
-  profile
+  profile,
+  analyze: profile
 };
