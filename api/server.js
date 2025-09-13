@@ -525,8 +525,21 @@ app.get('/api/cache/stats', async (req, res) => {
   }
 });
 
+// Serve static files from the built frontend
+app.use(express.static(path.join(__dirname, 'frontend', 'dist')));
+
+// Catch-all handler: send back React's index.html file for any non-API routes
+app.get('*', (req, res) => {
+  // Skip API routes
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
+});
+
 app.listen(PORT, () => {
   console.log(`Somnia Gas Profiler API server listening on port ${PORT}`);
+  console.log(`Frontend served from: ${path.join(__dirname, 'frontend', 'dist')}`);
 });
 
 // Graceful shutdown handling

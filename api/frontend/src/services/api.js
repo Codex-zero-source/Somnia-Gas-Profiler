@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// Use relative paths since frontend and backend are served from the same domain
+const API_BASE_URL = '';
 
 /**
  * Analyze a contract (quick analysis)
