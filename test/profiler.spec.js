@@ -277,7 +277,7 @@ describe('Configuration Validation', function() {
   it('should handle default configuration values', function() {
     const defaultConfig = {
       rpc: 'https://dream-rpc.somnia.network',
-      runs: 3,
+      runs: 1,
       format: 'table',
       sort: 'avg'
     };

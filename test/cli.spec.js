@@ -80,7 +80,7 @@ describe('CLI Integration Tests', function() {
     it('should have proper default values', function() {
       const defaults = {
         rpc: 'https://dream-rpc.somnia.network',
-        runs: 3,
+        runs: 1,
         out: 'profiling_results.json',
         gasless: false,
         verbose: false,
@@ -269,7 +269,7 @@ describe('CLI Integration Tests', function() {
         abi: { type: 'string', required: true },
         fn: { type: 'array', required: true },
         args: { type: 'array' },
-        runs: { type: 'number', default: 3 },
+        runs: { type: 'number', default: 1 },
         out: { type: 'string', default: 'profiling_results.json' },
         gasless: { type: 'boolean', default: false },
         verbose: { type: 'boolean', default: false }

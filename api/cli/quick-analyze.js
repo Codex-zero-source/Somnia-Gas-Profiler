@@ -79,7 +79,7 @@ async function quickAnalyze(options) {
       abi: JSON.stringify(abi),
       fn: functionsToProfile,
       args: testArgs.map(args => JSON.stringify(args)),
-      runs: options.runs || (options.quick ? 2 : 3),
+      runs: options.runs || (options.quick ? 2 : 1),
       out: options.out || `quick_analysis_${timestamp}.json`,
       gasless: options.gasless || true, // Default to gasless for quick analysis
       verbose: options.verbose || false

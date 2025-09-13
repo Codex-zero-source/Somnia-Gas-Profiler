@@ -80,7 +80,7 @@ async function compileAndProfile(options) {
       abi: JSON.stringify(contractData.abi),
       fn: contractData.functions,
       args: contractData.functions.map(func => JSON.stringify(testArgs[func] || [])),
-      runs: options.runs || 3,
+      runs: options.runs || 1,
       out: options.output || `${contractName}_profiling_${timestamp}.json`,
       gasless: options.gasless || false,
       verbose: options.verbose || false

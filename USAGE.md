@@ -57,7 +57,7 @@ somnia-gas-profiler profile [options]
 
 **Additional Options:**
 - `--abi <file.json>`: ABI file (optional for bytecode/source)
-- `--runs <number>`: Profiling iterations per function (default: 3)
+- `--runs <number>`: Profiling iterations per function (default: 1)
 - `--output <file>`: Output file path
 - `--gasless`: Enable gasless simulation
 - `--verbose`: Detailed logging
@@ -107,7 +107,7 @@ somnia-gas-profiler compile-and-profile [options]
 - `--contract-name <name>`: Contract name (auto-detected)
 
 **Profiling Options:**
-- `--runs <number>`: Profiling iterations (default: 3)
+- `--runs <number>`: Profiling iterations (default: 1)
 - `--gasless`: Gasless simulation
 - `--output <file>`: Output file path
 
@@ -157,7 +157,7 @@ somnia-gas-profiler quick-analyze --address <0x...> [options]
 
 **Speed Options:**
 - `--quick`: Ultra-fast mode (fewer functions, fewer runs)
-- `--runs <number>`: Iterations per function (default: 3)
+- `--runs <number>`: Iterations per function (default: 1)
 - `--skip-ai`: Skip AI analysis
 
 **Examples:**

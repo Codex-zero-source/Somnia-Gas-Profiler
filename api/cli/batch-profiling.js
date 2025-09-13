@@ -137,7 +137,7 @@ async function loadBatchConfig(configPath) {
       }
       
       // Set defaults
-      contract.runs = contract.runs || 3;
+      contract.runs = contract.runs || 1;
       contract.gasless = contract.gasless !== false; // Default to true for batch gasless
       contract.functions = contract.functions || ['*']; // Profile all functions by default
     }

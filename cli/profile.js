@@ -62,7 +62,7 @@ async function profile(options) {
       abi: JSON.stringify(contractData.abi),
       fn: contractData.functions,
       args: contractData.functions.map(func => JSON.stringify(testArgs[func] || [])),
-      runs: options.runs || 3,
+      runs: options.runs || 1,
       out: options.out || `output/profiling_${Date.now()}.json`,
       gasless: shouldUseGasless,
       verbose: options.verbose || false
