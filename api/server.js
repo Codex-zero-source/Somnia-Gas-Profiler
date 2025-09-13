@@ -37,7 +37,7 @@ app.use((req, res, next) => {
 // Helper function to run CLI command and get results
 async function runCLICommand(command) {
   return new Promise((resolve, reject) => {
-    exec(command, { cwd: path.join(__dirname, '..') }, (error, stdout, stderr) => {
+    exec(command, { cwd: __dirname }, (error, stdout, stderr) => {
       if (error) {
         reject({ error: error.message, stderr });
       } else {
