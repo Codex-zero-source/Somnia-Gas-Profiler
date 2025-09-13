@@ -601,7 +601,7 @@ export default function SomniaGasProfiler() {
           </div>
           <div className="border-t-2 border-white/20 pt-8 text-center">
             <p className="text-white font-bold uppercase tracking-wider">
-              © 2024 SOMNIA GAS PROFILER • BUILT FOR THE FUTURE
+              © 2025 SOMNIA GAS PROFILER • BUILT FOR THE FUTURE
             </p>
           </div>
         </div>
