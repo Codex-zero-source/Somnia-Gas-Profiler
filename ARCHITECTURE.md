@@ -41,6 +41,7 @@ The Somnia Gas Profiler dApp is a decentralized application that allows users to
 
 ### 3. Smart Contracts
 - **AnalysisRegistry.sol**: Stores metadata of contract analyses on-chain
+- **Deployed Contract Address**: `0x5e2a8a982690529aeb2952801dcddd1376684879`
 - Deployed to Somnia testnet using Foundry (Forge)
 - Allows transparent and verifiable storage of analysis results
 - Provides functions to retrieve analysis data

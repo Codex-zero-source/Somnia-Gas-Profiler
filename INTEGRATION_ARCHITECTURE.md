@@ -39,6 +39,15 @@ This document provides a comprehensive overview of the integrated architecture c
   - Global statistics tracking
   - TTL-based cache expiration
 
+### 4. Smart Contract Integration
+- **AnalysisRegistry Contract**: `0x5e2a8a982690529aeb2952801dcddd1376684879`
+- **Network**: Somnia Testnet
+- **Purpose**: On-chain storage of analysis metadata
+- **Key Features**:
+  - Decentralized analysis result storage
+  - Transparent and verifiable data
+  - Integration with Web3 wallets
+
 ## Data Flow Architecture
 
 ```
