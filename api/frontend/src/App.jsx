@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { connectWallet, switchToSomniaNetwork, getContract, isValidAddress } from './utils/web3';
-import { analyzeContract, fullAnalyzeContract, healthCheck } from './services/api';
+import { analyzeContract, fullAnalyzeContract, healthCheck, aiAnalyzeContract } from './services/api';
 import contractABI from './contracts/AnalysisRegistry.json';
 import { ethers } from 'ethers';
 
@@ -130,8 +130,11 @@ export default function SomniaGasProfiler() {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [error, setError] = useState('');
   const [walletConnected, setWalletConnected] = useState(false);
-  const [walletAddress, setWalletAddress] = useState('');
+  const [account, setAccount] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
+  const [aiInsights, setAiInsights] = useState(null);
+  const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
+  const [aiError, setAiError] = useState('');
 
   useEffect(() => {
     checkWalletConnection();
@@ -197,6 +200,39 @@ export default function SomniaGasProfiler() {
       setError(err.message || 'Analysis failed. Please try again.');
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const handleAiInsights = async () => {
+    if (!analysisResult || !contractAddress) {
+      setAiError('No analysis data available for AI insights');
+      return;
+    }
+
+    setIsGeneratingInsights(true);
+    setAiError('');
+
+    try {
+      const aiResponse = await aiAnalyzeContract({
+        contractAddress,
+        analysisData: analysisResult.analysis,
+        gasMetrics: {
+          totalGas: analysisResult.totalGas,
+          averageGas: analysisResult.averageGas,
+          totalRuns: analysisResult.totalRuns
+        }
+      });
+
+      if (aiResponse.success) {
+        setAiInsights(aiResponse.insights);
+      } else {
+        setAiError(aiResponse.error || 'Failed to generate AI insights');
+      }
+    } catch (error) {
+      console.error('AI Insights error:', error);
+      setAiError(error.message || 'Failed to generate AI insights. Please try again.');
+    } finally {
+      setIsGeneratingInsights(false);
     }
   };
 
@@ -568,6 +604,8 @@ export default function SomniaGasProfiler() {
                       </div>
                     </div>
                   </div>
+
+
                 ) : (
                   <div className="bg-red-500 border-4 border-black p-6 shadow-[8px_8px_0px_0px_#000000] relative">
                     <div className="absolute top-2 right-2 w-4 h-4 bg-black animate-pulse"></div>
@@ -577,6 +615,119 @@ export default function SomniaGasProfiler() {
                 )}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* AI Insights Section - Available after any analysis */}
+        {analysisResult && (
+          <div className="mt-8">
+            {!aiInsights && !isGeneratingInsights && (
+              <div className="text-center">
+                <Button
+                  onClick={handleAiInsights}
+                  className="bg-purple-500 hover:bg-purple-600 border-4 border-black text-black font-black uppercase tracking-wider px-8 py-4 text-lg shadow-[8px_8px_0px_0px_#000000] transition-all duration-200 hover:shadow-[4px_4px_0px_0px_#000000] hover:translate-x-1 hover:translate-y-1"
+                >
+                  🤖 Generate AI Insights
+                </Button>
+              </div>
+            )}
+
+            {isGeneratingInsights && (
+              <div className="bg-purple-500 border-4 border-black p-6 shadow-[8px_8px_0px_0px_#000000] relative">
+                <div className="absolute top-2 left-2 flex space-x-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                </div>
+                <div className="flex items-center justify-center space-x-4">
+                  <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
+                  <h4 className="text-xl font-black text-black uppercase tracking-wide">GENERATING AI INSIGHTS...</h4>
+                </div>
+              </div>
+            )}
+
+            {aiInsights && (
+              <div className="bg-purple-500 border-4 border-black p-6 shadow-[8px_8px_0px_0px_#000000] relative">
+                <div className="absolute top-2 left-2 flex space-x-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                </div>
+                <div className="flex items-center justify-between mb-6">
+                  <h4 className="text-xl font-black text-black uppercase tracking-wide">🤖 AI INSIGHTS</h4>
+                  <div className="flex items-center space-x-4">
+                    <span className="text-black text-sm font-bold uppercase">AI POWERED</span>
+                    <Button
+                      onClick={() => setAiInsights(null)}
+                      className="bg-black text-purple-500 border-2 border-purple-500 px-3 py-1 text-xs font-bold uppercase hover:bg-purple-500 hover:text-black transition-colors"
+                    >
+                      ✕ CLOSE
+                    </Button>
+                  </div>
+                </div>
+                <div className="bg-black/20 p-4 border-2 border-black/50 rounded">
+                  {aiInsights.recommendations && aiInsights.recommendations.length > 0 && (
+                    <div className="mb-6">
+                      <h5 className="text-lg font-black text-black mb-3 uppercase">🎯 OPTIMIZATION RECOMMENDATIONS</h5>
+                      <ul className="space-y-2">
+                        {aiInsights.recommendations.map((rec, index) => (
+                          <li key={index} className="flex items-start space-x-2">
+                            <span className="text-black font-bold">•</span>
+                            <span className="text-black font-bold">{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {aiInsights.gasOptimizations && aiInsights.gasOptimizations.length > 0 && (
+                    <div className="mb-6">
+                      <h5 className="text-lg font-black text-black mb-3 uppercase">⚡ GAS OPTIMIZATIONS</h5>
+                      <ul className="space-y-2">
+                        {aiInsights.gasOptimizations.map((opt, index) => (
+                          <li key={index} className="flex items-start space-x-2">
+                            <span className="text-black font-bold">•</span>
+                            <span className="text-black font-bold">{opt}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {aiInsights.securityInsights && aiInsights.securityInsights.length > 0 && (
+                    <div className="mb-6">
+                      <h5 className="text-lg font-black text-black mb-3 uppercase">🔒 SECURITY INSIGHTS</h5>
+                      <ul className="space-y-2">
+                        {aiInsights.securityInsights.map((insight, index) => (
+                          <li key={index} className="flex items-start space-x-2">
+                            <span className="text-black font-bold">•</span>
+                            <span className="text-black font-bold">{insight}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {aiInsights.summary && (
+                    <div>
+                      <h5 className="text-lg font-black text-black mb-3 uppercase">📊 AI SUMMARY</h5>
+                      <p className="text-black font-bold leading-relaxed">{aiInsights.summary}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {aiError && (
+              <div className="bg-red-500 border-4 border-black p-6 shadow-[8px_8px_0px_0px_#000000] relative mt-4">
+                <div className="absolute top-2 right-2 w-4 h-4 bg-black animate-pulse"></div>
+                <h4 className="text-xl font-black text-black mb-3 uppercase tracking-wide">AI INSIGHTS FAILED</h4>
+                <p className="text-lg font-bold text-black">{aiError}</p>
+                <Button
+                  onClick={() => setAiError('')}
+                  className="mt-4 bg-black text-red-500 border-2 border-red-500 px-4 py-2 text-sm font-bold uppercase hover:bg-red-500 hover:text-black transition-colors"
+                >
+                  DISMISS
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </main>

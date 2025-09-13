@@ -108,15 +108,92 @@ export const getCacheStats = async () => {
 
 export const deleteAnalysisCache = async (contractAddress) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/cache/${contractAddress}`, {
-      method: 'DELETE'
+    const response = await fetch(`${API_BASE_URL}/api/analysis/${contractAddress}`, {
+      method: 'DELETE',
     });
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    return await response.json();
+
+    const data = await response.json();
+    return data;
   } catch (error) {
     console.error('Failed to delete analysis cache:', error);
     throw error;
   }
 };
+
+/**
+ * AI-powered gas analysis
+ */
+export async function aiAnalyzeContract({ contractAddress, analysisData, gasMetrics }) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/ai/analyze`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contractAddress,
+        analysisData,
+        gasMetrics
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Failed to perform AI analysis:', error);
+    throw error;
+  }
+}
+
+/**
+ * Validate security configuration
+ */
+export async function validateSecurity() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/security/validate`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Failed to validate security:', error);
+    throw error;
+  }
+}
+
+/**
+ * Submit feedback for AI recommendations
+ */
+export async function submitFeedback(feedbackData) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/monitoring/feedback`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(feedbackData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Failed to submit feedback:', error);
+    throw error;
+  }
+}

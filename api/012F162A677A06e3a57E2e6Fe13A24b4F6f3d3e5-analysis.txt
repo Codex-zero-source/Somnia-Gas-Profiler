@@ -1,0 +1,46 @@
+Somnia Gas Profiling Report
+==========================
+Contract: 0x012F162A677A06e3a57E2e6Fe13A24b4F6f3d3e5
+Network: Somnia Testnet
+Functions Analyzed: 10
+Timestamp: 2025-09-13T17:25:30.294Z
+
+Developer Analysis
+-------------------
+Contract Type: DeFi
+Complexity: very complex
+Total Functions: 40
+  - View/Pure: 25
+  - State-changing: 15
+Events: 14
+Bytecode: 44872 bytes
+
+Somnia Gas Profiling Results
+==============================
+
+Administrative Functions
+------------------------
+  • setCommunityVault(address) - Excellent (32,576 gas)
+  • setPluginConfig(uint8) - Excellent (32,548 gas)
+  • setPlugin(address) - Excellent (32,449 gas)
+  • setCommunityFee(uint16) - Excellent (31,997 gas)
+  • initialize(uint160) - Excellent (27,904 gas)
+  • setFee(uint16) - Excellent (27,699 gas)
+
+State Management
+----------------
+  • burn(int24,int24,uint128,bytes) - Excellent (48,067 gas)
+  • mint(address,address,int24,int24,uint128,bytes) - Excellent (32,000 gas)
+
+Other Functions
+---------------
+  • collect(address,int24,int24,uint128,uint128) - Excellent (31,000 gas)
+  • flash(address,uint256,uint256,bytes) - Excellent (30,000 gas)
+
+Key Developer Insights
+----------------------
+• Average Gas Usage: 32,624
+• Range: 27,699 - 48,067 gas
+• Most Expensive: burn(int24,int24,uint128,bytes)
+• Most Efficient: setFee(uint16)
+• Total Analysis Cost: 0.00587232 STT

@@ -5,6 +5,7 @@ const chalk = require('chalk');
 const { GaslessSimulator } = require('./gasless-simulator');
 const { PaymasterUtils } = require('../utils/paymaster');
 const { BytecodeProcessor } = require('../lib/bytecode-processor');
+const AIGasAnalyzer = require('../lib/ai-gas-analyzer');
 
 class SomniaGasProfiler {
   constructor() {
@@ -13,12 +14,14 @@ class SomniaGasProfiler {
     this.gaslessSimulator = null;
     this.paymasterUtils = null;
     this.bytecodeProcessor = null;
+    this.aiGasAnalyzer = null;
     this.results = {
       rpc: '',
       address: '',
       network: 'Somnia Testnet',
       timestamp: '',
-      results: {}
+      results: {},
+      aiAnalysis: null
     };
   }
 
@@ -34,6 +37,9 @@ class SomniaGasProfiler {
       
       // Initialize bytecode processor for intelligent argument generation
       this.bytecodeProcessor = new BytecodeProcessor(this.provider, this.wallet);
+      
+      // Initialize AI gas analyzer
+      this.aiGasAnalyzer = new AIGasAnalyzer();
       
       // Test connection
       const network = await this.provider.getNetwork();
@@ -645,6 +651,53 @@ class SomniaGasProfiler {
           console.error(chalk.red(`❌ Failed to profile ${func.fullSignature}: ${error.message}`));
           throw error;
         }
+      }
+      
+      // Perform AI-powered gas analysis
+      if (this.aiGasAnalyzer && this.aiGasAnalyzer.enabled) {
+        try {
+          console.log(chalk.blue('🤖 Performing AI-powered gas analysis...'));
+          
+          // Extract gas metrics from profiling results
+          const gasMetrics = this.aiGasAnalyzer.extractGasMetrics(this.results.results);
+          
+          // Get contract source code if available for enhanced analysis
+          let contractCode = null;
+          try {
+            const contractCodePath = path.join(process.cwd(), 'contracts', `${address}.sol`);
+            contractCode = await fs.readFile(contractCodePath, 'utf8');
+          } catch (codeError) {
+            // Contract source not available, continue without it
+            console.log(chalk.gray('   Contract source code not found, analyzing gas metrics only'));
+          }
+          
+          // Perform AI analysis
+          const aiAnalysis = await this.aiGasAnalyzer.analyzeWithAI(gasMetrics, contractCode);
+          
+          // Add AI analysis to results
+          this.results.aiAnalysis = aiAnalysis.aiAnalysis;
+          
+          // Save detailed AI analysis to separate file
+          await this.aiGasAnalyzer.saveAnalysis(aiAnalysis, address);
+          
+          console.log(chalk.green('✅ AI analysis completed'));
+          
+          // Display key recommendations
+          if (aiAnalysis.aiAnalysis && aiAnalysis.aiAnalysis.recommendations) {
+            console.log(chalk.cyan('\n🎯 Top AI Recommendations:'));
+            aiAnalysis.aiAnalysis.recommendations.slice(0, 3).forEach((rec, index) => {
+              console.log(chalk.white(`   ${index + 1}. ${rec.title} (${rec.priority} priority):`));
+              console.log(chalk.gray(`      ${rec.description}`));
+              console.log(chalk.green(`      💰 Estimated savings: ${rec.estimatedSavings}`));
+            });
+          }
+          
+        } catch (aiError) {
+          console.log(chalk.yellow(`⚠️  AI analysis failed: ${aiError.message}`));
+          console.log(chalk.gray('   Continuing with standard gas profiling results...'));
+        }
+      } else {
+        console.log(chalk.gray('🤖 AI analysis disabled or not configured'));
       }
       
       // Save results

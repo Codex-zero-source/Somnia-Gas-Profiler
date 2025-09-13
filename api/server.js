@@ -9,6 +9,9 @@ const fs = require('fs').promises;
 const redisService = require('./services/redisService');
 const BlockchainService = require('./services/blockchain');
 const { DeveloperAnalyzer } = require('./lib/developer-analyzer');
+const AIGasAnalyzer = require('./lib/ai-gas-analyzer');
+const SecurityManager = require('./lib/security-manager');
+const MonitoringService = require('./lib/monitoring-service');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -27,6 +30,11 @@ redisService.connect()
 
 const blockchainService = new BlockchainService();
 blockchainService.initialize();
+
+// Initialize AI services
+const aiAnalyzer = new AIGasAnalyzer();
+const securityManager = new SecurityManager();
+const monitoringService = new MonitoringService();
 
 app.use(express.json());
 app.use((req, res, next) => {
@@ -565,6 +573,141 @@ app.get('/api/cache/stats', async (req, res) => {
 });
 
 // Serve static files from the built frontend
+// AI Analysis endpoint
+app.post('/api/ai/analyze', async (req, res) => {
+  try {
+    const { contractAddress, analysisData, gasMetrics } = req.body;
+    
+    if (!contractAddress || !analysisData) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Contract address and analysis data are required' 
+      });
+    }
+
+    // Security validation
+    const isValid = await securityManager.validateAPIKey(req.headers.authorization);
+    if (!isValid) {
+      console.log('AI analysis request without valid API key, proceeding with basic analysis');
+    }
+
+    // Sanitize input data
+    const sanitizedData = securityManager.sanitizeInput({
+      contractAddress,
+      analysisData,
+      gasMetrics
+    });
+
+    // Perform AI analysis
+    const aiInsights = await aiAnalyzer.analyzeGasProfile(
+      sanitizedData.analysisData,
+      sanitizedData.contractAddress,
+      sanitizedData.gasMetrics
+    );
+
+    // Track performance metrics
+    await monitoringService.trackAIAnalysis({
+      contractAddress: sanitizedData.contractAddress,
+      success: true,
+      responseTime: Date.now(),
+      insightsGenerated: aiInsights ? Object.keys(aiInsights).length : 0
+    });
+
+    res.json({
+      success: true,
+      insights: aiInsights,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('AI Analysis error:', error);
+    
+    // Track error metrics
+    await monitoringService.trackAIAnalysis({
+      contractAddress: req.body.contractAddress,
+      success: false,
+      error: error.message,
+      responseTime: Date.now()
+    });
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate AI insights. Please try again later.'
+    });
+  }
+});
+
+// Security validation endpoint
+app.post('/api/security/validate', async (req, res) => {
+  try {
+    const { data } = req.body;
+    
+    const validationResult = await securityManager.validateInput(data);
+    
+    res.json({
+      success: true,
+      isValid: validationResult.isValid,
+      issues: validationResult.issues || []
+    });
+  } catch (error) {
+    console.error('Security validation error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Security validation failed'
+    });
+  }
+});
+
+// Monitoring report endpoint
+app.get('/api/monitoring/report', async (req, res) => {
+  try {
+    const report = await monitoringService.generatePerformanceReport();
+    
+    res.json({
+      success: true,
+      report
+    });
+  } catch (error) {
+    console.error('Monitoring report error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate monitoring report'
+    });
+  }
+});
+
+// Feedback submission endpoint
+app.post('/api/feedback', async (req, res) => {
+  try {
+    const { contractAddress, feedback, rating } = req.body;
+    
+    if (!contractAddress || !feedback) {
+      return res.status(400).json({
+        success: false,
+        error: 'Contract address and feedback are required'
+      });
+    }
+
+    await monitoringService.collectUserFeedback({
+      contractAddress,
+      feedback,
+      rating: rating || 0,
+      timestamp: new Date().toISOString()
+    });
+
+    res.json({
+      success: true,
+      message: 'Feedback submitted successfully'
+    });
+  } catch (error) {
+    console.error('Feedback submission error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to submit feedback'
+    });
+  }
+});
+
 app.use(express.static(path.join(__dirname, 'frontend', 'dist')));
 
 // Catch-all handler: send back React's index.html file for any non-API routes
