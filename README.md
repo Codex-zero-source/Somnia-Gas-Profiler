@@ -1,12 +1,22 @@
 # Somnia Gas Profiler
 
-Professional gas profiling and analysis tool for Somnia blockchain smart contracts with advanced developer insights and automated ABI fetching.
+Professional gas profiling and analysis platform for Somnia smart contracts. This repository contains a unified Node.js API that serves a modern React (Vite) frontend and exposes HTTP endpoints for programmatic analysis. It also includes a CLI toolkit used by the API for executing analyses.
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/somnia/gas-profiler)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D16.0.0-brightgreen.svg)](https://nodejs.org/)
 
-## 🚀 Features
+## Overview
+
+- Unified deployment: Express API (Node.js) + React frontend (Vite) under `api/`
+- ABI auto‑fetching for contracts on the Somnia network
+- Redis‑backed caching of analysis results to speed up repeat requests
+- Export analysis in JSON/CSV and view results in a polished web UI
+- CLI analysis tools integrated and used by the API
+
+Live service (Render): https://somnia-gas-profiler.onrender.com
+
+## Features
 
 - **Automated ABI Fetching**: Automatically retrieves contract ABIs from Somnia Explorer
 - **Comprehensive Gas Analysis**: Detailed gas consumption profiling for smart contract functions
@@ -21,6 +31,8 @@ Professional gas profiling and analysis tool for Somnia blockchain smart contrac
 - **Node.js**: Version 16.0.0 or higher
 - **npm**: Latest version recommended
 - **Git**: For cloning the repository
+- **Redis**: Server for caching and session management
+- **Access**: To Somnia blockchain network
 
 ## ⚡ Quick Start
 
@@ -31,47 +43,149 @@ Professional gas profiling and analysis tool for Somnia blockchain smart contrac
 git clone https://github.com/somnia/gas-profiler.git
 cd gas-profiler
 
-# Install dependencies
+# Install root dependencies (for CLI tools and testing)
 npm install
 
-# Verify installation
-npm test
+# Install API service dependencies
+cd api
+npm install
+
+# Build the React frontend
+cd frontend
+npm install
+npm run build
+cd ..
+
+# Set up environment variables
+cp ../.env.example .env
+# Edit .env with your Redis and blockchain configuration
+
+# Start Redis server (if not already running)
+redis-server
+
+# Start the unified API + frontend server
+node server.js
 ```
+
+The application will be available at `http://localhost:3000` with both the web interface and API endpoints.
 
 ### Basic Usage
 
+#### Web Interface
+Once the server is running, open your browser to `http://localhost:3000` to access the modern React-based interface where you can:
+- Enter contract addresses for analysis
+- View detailed gas profiling results
+- Export analysis data in JSON or CSV format
+- Browse recent analyses and statistics
+
+#### API Endpoints
+The server exposes REST API endpoints for programmatic access:
+
 ```bash
-# Profile a contract by address (auto-fetches ABI)
-npm run quick-analyze -- --address 0x1234567890123456789012345678901234567890
+# Analyze a contract via API
+curl -X POST http://localhost:3000/api/full-analyze \
+  -H "Content-Type: application/json" \
+  -d '{"contractAddress": "0x1234567890123456789012345678901234567890"}'
 
-# Profile with custom ABI file
-npm run analyze -- --address 0x1234... --abi ./path/to/contract.json
+# Get recent analyses
+curl http://localhost:3000/api/recent-analyses
 
-# Generate detailed reports
-npm run report -- --in ./profiling_results.json --format csv
+# Check server health
+curl http://localhost:3000/api/health
 ```
 
-## 🛠️ CLI Commands
+#### CLI Tools (Development)
+For development and testing, CLI tools are available at the project root:
 
-### Core Commands
+```bash
+# Quick analysis with automatic ABI fetching
+node cli/quick-analyze.js --address 0x1234567890123456789012345678901234567890
 
-| Command | Description | Example |
-|---------|-------------|---------|
-| `quick-analyze` | Fast analysis with auto ABI fetching | `npm run quick-analyze -- --address 0x123...` |
-| `analyze` | Full contract analysis | `npm run analyze -- --address 0x123... --functions swap,mint` |
-| `profile` | Gas profiling with custom parameters | `npm run profile -- --contract ./contract.json` |
-| `report` | Generate reports from existing data | `npm run report -- --in results.json --format table` |
+# Batch profiling multiple contracts
+node cli/batch-profiling.js --file contracts.txt
+```
 
-### Options
+## 🔧 API Reference
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--address` | Contract address to analyze | Required |
-| `--abi` | Path to ABI file | Auto-fetch |
-| `--functions` | Specific functions to profile | All functions |
-| `--network` | Network configuration | somnia |
-| `--format` | Output format (json/csv/table) | json |
-| `--out` | Output file path | Auto-generated |
+### POST /api/full-analyze
+Performs comprehensive gas analysis on a smart contract.
+
+**Request Body:**
+```json
+{
+  "contractAddress": "0x1234567890123456789012345678901234567890"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "contractAddress": "0x1234...",
+    "analysis": { /* detailed analysis results */ },
+    "exportFiles": {
+      "json": "/path/to/analysis.json",
+      "csv": "/path/to/analysis.csv"
+    }
+  }
+}
+```
+
+### GET /api/recent-analyses
+Retrieve recently performed analyses.
+
+**Query Parameters:**
+- `limit` (optional): Number of results to return (default: 10)
+
+### GET /api/analysis/:contractAddress
+Retrieve cached analysis for a specific contract address.
+
+### DELETE /api/analysis/:contractAddress
+Delete cached analysis for a specific contract address.
+
+### GET /api/health
+Health check endpoint returning server status and Redis connection info.
+
+### GET /api/stats
+Retrieve global statistics about analyses performed.
+
+## 🛠️ CLI Commands (Development)
+
+The following CLI tools are available for development and testing purposes. In production, the API server uses its own co-located copies of these tools.
+
+### Quick Analysis
+```bash
+node cli/quick-analyze.js --address <CONTRACT_ADDRESS> [options]
+
+Options:
+  --address        Contract address (required)
+  --export-redis   Export to Redis cache
+  --export-csv     Export to CSV file
+  --output         Custom output directory
+  --verbose        Enable verbose output
+```
+
+### Batch Processing
+```bash
+node cli/batch-profiling.js --file <ADDRESSES_FILE> [options]
+
+Options:
+  --file           File containing contract addresses (one per line)
+  --concurrent     Number of concurrent analyses (default: 3)
+  --delay          Delay between analyses in ms (default: 1000)
+  --output-dir     Directory for output files
+```
+
+### Paymaster Discovery
+```bash
+node cli/paymaster-discovery.js [options]
+
+Options:
+  --scan-recent    Scan recent blocks for paymaster contracts
+  --analyze        Perform gas analysis on discovered paymasters
+  --export         Export results to file
+```
 
 ## 📊 Analysis Features
 
@@ -135,8 +249,9 @@ somnia-gas-profiler/
 
 ## 🧪 Testing
 
+### Running Tests
 ```bash
-# Run all tests
+# Run all tests (from project root)
 npm test
 
 # Run tests in watch mode
@@ -144,7 +259,23 @@ npm run test:watch
 
 # Run specific test file
 npx mocha test/profiler.spec.js
+
+# Test the API server
+cd api
+npm test
+
+# Test the frontend
+cd api/frontend
+npm test
 ```
+
+### Test Categories
+
+- **Unit Tests**: Individual component and library testing
+- **Integration Tests**: API endpoint and workflow testing
+- **E2E Tests**: Full application testing including frontend
+- **Performance Tests**: Gas optimization validation
+- **Network Tests**: Blockchain interaction testing
 
 ## 📈 Example Workflow
 
@@ -166,21 +297,103 @@ npm run analyze -- --address 0x123... --gasless
 
 ### Environment Variables
 
-Create a `.env` file based on `.env.example`:
+Create a `.env` file in the project root:
 
 ```env
-# Somnia Network Configuration
-SOMNIA_RPC_URL=https://somnia-devnet.io
-SOMNIA_PRIVATE_KEY=your_private_key_here
-SOMNIA_EXPLORER_URL=https://shannon-explorer.somnia.network
+# Blockchain Configuration
+SONIA_RPC_URL=https://rpc.somnia.network
+SONIA_EXPLORER_URL=https://explorer.somnia.network
 
-# Gas Configuration
-DEFAULT_GAS_PRICE=6000000000
+# Redis Configuration
+REDIS_URL=redis://localhost:6379
+REDIS_PASSWORD=your_redis_password
+
+# Application Settings
+PORT=3000
+NODE_ENV=development
+LOG_LEVEL=info
+
+# Analysis Settings
 DEFAULT_GAS_LIMIT=8000000
+MAX_CONCURRENT_ANALYSES=5
+CACHE_TTL=3600
 
-# Analysis Configuration
-MAX_FUNCTION_CALLS=10
-ANALYSIS_TIMEOUT=300000
+# Frontend Build (for production)
+FRONTEND_BUILD_PATH=./frontend/dist
+```
+
+## 🚀 Deployment
+
+### Production Deployment
+
+The application is designed for unified deployment with both API and frontend served from a single Node.js process.
+
+#### Using Render (Recommended)
+
+The project includes a `render.yaml` configuration for easy deployment:
+
+```yaml
+services:
+  - type: web
+    name: somnia-gas-profiler
+    env: node
+    buildCommand: |
+      cd api && npm install
+      cd frontend && npm install && npm run build
+    startCommand: cd api && node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: somnia-gas-profiler-redis
+          property: connectionString
+
+  - type: redis
+    name: somnia-gas-profiler-redis
+    ipAllowList: []
+```
+
+#### Manual Deployment
+
+```bash
+# 1. Clone and install dependencies
+git clone <repository-url>
+cd somnia-gas-profiler
+
+# 2. Install API dependencies
+cd api
+npm install
+
+# 3. Build frontend
+cd frontend
+npm install
+npm run build
+cd ..
+
+# 4. Set production environment variables
+export NODE_ENV=production
+export REDIS_URL=your_redis_connection_string
+export PORT=3000
+
+# 5. Start the server
+node server.js
+```
+
+#### Docker Deployment
+
+```bash
+# Build the Docker image
+docker build -t somnia-gas-profiler .
+
+# Run with Redis
+docker run -d --name redis redis:alpine
+docker run -d -p 3000:3000 \
+  --link redis:redis \
+  -e REDIS_URL=redis://redis:6379 \
+  -e NODE_ENV=production \
+  somnia-gas-profiler
 ```
 
 ### Network Configuration
@@ -240,66 +453,124 @@ const analysis = analyzer.analyzeGasProfile(profilingData, contractAddress);
 
 ### Common Issues
 
-**ABI Fetch Failed**
-```bash
-# Check contract verification status
-npm run analyze -- --address 0x123... --debug
+#### Server Won't Start
+- **Issue**: API server fails to start
+- **Solution**: Check Redis connection and port availability
+- **Check**: Ensure all dependencies are installed in both `api/` and `api/frontend/`
 
-# Use manual ABI file
-npm run analyze -- --address 0x123... --abi ./contract.json
-```
+#### Frontend Not Loading
+- **Issue**: Web interface shows 404 or blank page
+- **Solution**: Ensure frontend is built (`cd api/frontend && npm run build`)
+- **Check**: Verify `FRONTEND_BUILD_PATH` environment variable
 
-**High Gas Usage**
-```bash
-# Enable gasless mode for large contracts
-npm run analyze -- --address 0x123... --gasless
+#### API Endpoints Return 500 Error
+- **Issue**: Analysis requests fail with HTTP 500
+- **Solution**: Check Redis connection and CLI tool availability
+- **Debug**: Check server logs for specific error messages
 
-# Limit function calls
-npm run analyze -- --address 0x123... --max-calls 5
-```
+#### High Gas Usage Analysis
+- **Issue**: Contract shows unexpectedly high gas consumption
+- **Solution**: Check for loops, external calls, and storage operations
+- **Tools**: Use the detailed function analysis feature in the web interface
 
-**Network Connection Issues**
-```bash
-# Check .env configuration
-# Verify RPC endpoint accessibility
-# Ensure private key has sufficient balance
-```
+#### Network Connection Issues
+- **Issue**: Cannot connect to Somnia network
+- **Solution**: Verify RPC URL and network configuration in `.env`
+- **Check**: Ensure firewall allows outbound connections
+
+#### ABI Fetching Failures
+- **Issue**: Cannot automatically fetch contract ABI
+- **Solution**: The system will attempt to analyze without ABI
+- **Alternative**: Verify contract is verified on Somnia Explorer
+
+#### Redis Connection Issues
+- **Issue**: Cache operations fail
+- **Solution**: Verify Redis server is running and accessible
+- **Check**: Test Redis connection with `redis-cli ping`
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+We welcome contributions! Please follow these steps:
 
 ### Development Setup
 
 ```bash
-git clone https://github.com/somnia/gas-profiler.git
-cd gas-profiler
+# Fork and clone the repository
+git clone https://github.com/your-username/somnia-gas-profiler.git
+cd somnia-gas-profiler
+
+# Install root dependencies
 npm install
-npm test
+
+# Install API dependencies
+cd api
+npm install
+
+# Install frontend dependencies
+cd frontend
+npm install
+cd ..
+
+# Set up environment
+cp ../.env.example .env
+# Edit .env with your configuration
+
+# Start development server
+node server.js
 ```
+
+### Making Changes
+
+1. Create a feature branch: `git checkout -b feature/your-feature-name`
+2. Make your changes to the appropriate directory:
+   - API changes: `api/server.js`, `api/services/`, etc.
+   - Frontend changes: `api/frontend/src/`
+   - CLI changes: `api/cli/` (and optionally root `cli/` for development)
+3. Test your changes: `npm test`
+4. Build frontend if modified: `cd api/frontend && npm run build`
+5. Submit a pull request with a clear description
+
+### Code Style
+
+- Follow existing code conventions
+- Add tests for new features
+- Update documentation as needed
+- Ensure all tests pass before submitting
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## 🌐 Live Service
+
+Try the Somnia Gas Profiler online without any setup:
+
+**🔗 https://somnia-gas-profiler.onrender.com**
+
+The live service includes:
+- Full web interface for contract analysis
+- Real-time gas profiling results
+- Export functionality (JSON/CSV)
+- Recent analyses browser
+- API endpoints for programmatic access
+
+*Note: The live service may take a moment to wake up if it hasn't been used recently.*
+
 ## 🆘 Support
 
-- **Documentation**: [docs/](./docs/)
-- **Examples**: [examples/](./examples/)
 - **Issues**: [GitHub Issues](https://github.com/somnia/gas-profiler/issues)
 - **Discord**: [Somnia Community](https://discord.gg/somnia)
+- **Documentation**: [docs/](./docs/)
+- **Examples**: [examples/](./examples/)
 
 ## 🎯 Roadmap
 
-- [ ] Multi-network support
-- [ ] Gas optimization suggestions
-- [ ] Integration with popular IDEs
-- [ ] Historical gas trend analysis
-- [ ] Automated CI/CD integration
+- [ ] **Advanced Gas Optimization Suggestions**
+- [ ] **Real-time Gas Monitoring Dashboard**
+- [ ] **Integration with Popular IDEs**
+- [ ] **Automated Gas Regression Testing**
+- [ ] **Multi-contract Batch Analysis UI**
+- [ ] **Historical Gas Trend Analysis**
 
 ---
 

@@ -8,6 +8,7 @@ const { exec } = require('child_process');
 const fs = require('fs').promises;
 const redisService = require('./services/redisService');
 const BlockchainService = require('./services/blockchain');
+const { DeveloperAnalyzer } = require('./lib/developer-analyzer');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -149,9 +150,28 @@ app.post('/api/full-analyze', async (req, res) => {
         if (cachedAnalysis) {
           const parsed = JSON.parse(cachedAnalysis);
           console.log(`Returning cached full analysis for: ${contractAddress}`);
+          
+          // Generate formatted report for cached data if not already present
+          let formattedReport = parsed.formattedReport || '';
+          if (!formattedReport) {
+            const developerAnalyzer = new DeveloperAnalyzer();
+            try {
+              const developerAnalysis = developerAnalyzer.analyzeGasProfile(
+                parsed.analysis,
+                contractAddress,
+                parsed.analysis.contractAnalysis
+              );
+              formattedReport = developerAnalyzer.displayAnalysis(developerAnalysis, true);
+            } catch (reportError) {
+              console.error('Failed to generate formatted report for cached data:', reportError.message);
+              formattedReport = 'Error generating formatted report';
+            }
+          }
+          
           return res.json({
             success: true,
             analysis: parsed.analysis,
+            formattedReport,
             csvData: parsed.csvData,
             cached: true,
             timestamp: parsed.timestamp,
@@ -259,6 +279,7 @@ app.post('/api/full-analyze', async (req, res) => {
         if (redisService.isReady()) {
           const cacheData = {
             ...analysisResult,
+            formattedReport,
             csvData,
             timestamp: new Date().toISOString(),
             onChainMetadata: onChainResult
@@ -294,9 +315,27 @@ app.post('/api/full-analyze', async (req, res) => {
         console.error('Could not clean up temporary files:', cleanupError.message);
       }
       
+      // Generate formatted report using DeveloperAnalyzer
+      const developerAnalyzer = new DeveloperAnalyzer();
+      let formattedReport = '';
+      
+      try {
+        // Use the analysis result to generate the formatted report
+        const developerAnalysis = developerAnalyzer.analyzeGasProfile(
+          analysisResult,
+          contractAddress,
+          analysisResult.contractAnalysis
+        );
+        formattedReport = developerAnalyzer.displayAnalysis(developerAnalysis, true);
+      } catch (reportError) {
+        console.error('Failed to generate formatted report:', reportError.message);
+        formattedReport = 'Error generating formatted report';
+      }
+      
       res.json({
         success: true,
         analysis: analysisResult,
+        formattedReport,
         csvData,
         cached: false,
         timestamp: new Date().toISOString(),

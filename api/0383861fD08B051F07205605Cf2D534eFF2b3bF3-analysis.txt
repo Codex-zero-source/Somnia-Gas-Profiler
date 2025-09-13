@@ -1,0 +1,52 @@
+Somnia Gas Profiling Report
+==========================
+Contract: 0x0383861fD08B051F07205605Cf2D534eFF2b3bF3
+Network: Somnia Testnet
+Functions Analyzed: 10
+Timestamp: 2025-09-13T13:20:22.297Z
+
+Developer Analysis
+-------------------
+Contract Type: Custom
+Complexity: complex
+Total Functions: 21
+  - View/Pure: 10
+  - State-changing: 11
+Events: 9
+Bytecode: 20686 bytes
+
+Somnia Gas Profiling Results
+==============================
+
+Query Functions
+---------------
+  • transferOwnership(address) - Excellent (27,851 gas)
+  • renounceOwnership() - Excellent (22,401 gas)
+
+Administrative Functions
+------------------------
+  • setTrustedSigner(address,bool) - Excellent (33,105 gas)
+  • pause() - Excellent (22,423 gas)
+  • unpause() - Excellent (22,402 gas)
+
+Fee Management
+--------------
+  • updateEntryFee(uint256) - Excellent (27,737 gas)
+
+State Management
+----------------
+  • updateMaxReward(uint256) - Excellent (27,803 gas)
+
+Other Functions
+---------------
+  • endGame(bool,uint256,uint128,uint256,bytes) - Good (61,643 gas)
+  • startGame() - Excellent (22,502 gas)
+  • deposit() - Excellent (22,332 gas)
+
+Key Developer Insights
+----------------------
+• Average Gas Usage: 29,020
+• Range: 22,332 - 61,643 gas
+• Most Expensive: endGame(bool,uint256,uint128,uint256,bytes)
+• Most Efficient: deposit()
+• Total Analysis Cost: 0.00522358 STT

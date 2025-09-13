@@ -174,6 +174,8 @@ export default function SomniaGasProfiler() {
       const formattedResult = {
         success: result.success || true,
         analysis: result.analysis || result,
+        formattedReport: result.formattedReport || null,
+        csvData: result.csvData || null,
         cached: result.cached || false,
         timestamp: result.timestamp || new Date().toISOString(),
         executionTime: result.executionTime || null,
@@ -555,7 +557,7 @@ export default function SomniaGasProfiler() {
                           <span className="text-white font-mono">cat contract_analysis.json</span>
                         </div>
                         <pre className="text-green-300 text-sm font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-96 overflow-y-auto">
-                          {JSON.stringify(analysisResult.analysis, null, 2)}
+                          {analysisResult.formattedReport || JSON.stringify(analysisResult.analysis, null, 2)}
                         </pre>
                         <div className="mt-4 pt-4 border-t border-green-400/30">
                           <div className="flex items-center justify-between text-xs">
@@ -601,7 +603,7 @@ export default function SomniaGasProfiler() {
           </div>
           <div className="border-t-2 border-white/20 pt-8 text-center">
             <p className="text-white font-bold uppercase tracking-wider">
-              © 2024 SOMNIA GAS PROFILER • BUILT FOR THE FUTURE
+              © 2025 SOMNIA GAS PROFILER • BUILT FOR THE FUTURE
             </p>
           </div>
         </div>
