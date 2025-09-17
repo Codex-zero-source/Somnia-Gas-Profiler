@@ -1,7 +1,7 @@
 const path = require('path');
 
-// Load environment variables from project root
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+// Load environment variables from api directory
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const express = require('express');
 const { exec } = require('child_process');
@@ -179,6 +179,7 @@ app.post('/api/full-analyze', async (req, res) => {
           return res.json({
             success: true,
             analysis: parsed.analysis,
+            contractABI: parsed.contractABI || parsed.analysis?.abi || parsed.analysis?.contractABI || null,
             formattedReport,
             csvData: parsed.csvData,
             cached: true,
@@ -287,6 +288,7 @@ app.post('/api/full-analyze', async (req, res) => {
         if (redisService.isReady()) {
           const cacheData = {
             ...analysisResult,
+            contractABI: contractABI,
             formattedReport,
             csvData,
             timestamp: new Date().toISOString(),
@@ -323,6 +325,22 @@ app.post('/api/full-analyze', async (req, res) => {
         console.error('Could not clean up temporary files:', cleanupError.message);
       }
       
+      // Extract ABI data from analysis result or command output
+      let contractABI = null;
+      try {
+        // Try to extract ABI from analysis result
+        if (analysisResult && analysisResult.abi) {
+          contractABI = analysisResult.abi;
+        } else if (analysisResult && analysisResult.contractABI) {
+          contractABI = analysisResult.contractABI;
+        } else if (stdout && stdout.includes('ABI loaded')) {
+          // Try to extract ABI from command output if available
+          console.log('ABI detected in command output, but not in structured result');
+        }
+      } catch (abiError) {
+        console.warn('Could not extract ABI data:', abiError.message);
+      }
+
       // Generate formatted report using DeveloperAnalyzer
       const developerAnalyzer = new DeveloperAnalyzer();
       let formattedReport = '';
@@ -343,6 +361,7 @@ app.post('/api/full-analyze', async (req, res) => {
       res.json({
         success: true,
         analysis: analysisResult,
+        contractABI: contractABI,
         formattedReport,
         csvData,
         cached: false,
@@ -573,10 +592,73 @@ app.get('/api/cache/stats', async (req, res) => {
 });
 
 // Serve static files from the built frontend
+// Transform AI analysis result to frontend-expected format
+function transformAIAnalysisForFrontend(aiAnalysisResult) {
+  if (!aiAnalysisResult || !aiAnalysisResult.aiAnalysis) {
+    return {
+      recommendations: [],
+      gasOptimizations: [],
+      securityInsights: [],
+      summary: 'No AI analysis available',
+      llmResponse: null,
+      rawResponse: null
+    };
+  }
+
+  const aiAnalysis = aiAnalysisResult.aiAnalysis;
+  const recommendations = [];
+  const gasOptimizations = [];
+
+  // Process AI recommendations in the new format
+  if (aiAnalysis.recommendations && Array.isArray(aiAnalysis.recommendations)) {
+    aiAnalysis.recommendations.forEach(rec => {
+      const formattedRec = {
+        function: rec.function || 'Unknown',
+        issue: rec.issue || rec.title || 'No issue description',
+        suggestion: rec.suggestion || rec.description || 'No suggestion provided',
+        priority: rec.priority || 'Medium',
+        estimatedSavings: rec.estimatedSavings || 'Unknown',
+        riskNotes: rec.riskNotes || rec.implementation || 'No risk notes'
+      };
+      
+      // All recommendations are now gas optimizations
+      gasOptimizations.push(formattedRec);
+    });
+  }
+
+  // If using old format, convert to new format
+  if (gasOptimizations.length === 0 && aiAnalysis.recommendations && Array.isArray(aiAnalysis.recommendations)) {
+    aiAnalysis.recommendations.forEach(rec => {
+      if (rec.title || rec.description) {
+        gasOptimizations.push({
+          function: 'General',
+          issue: rec.title || 'Optimization opportunity',
+          suggestion: rec.description || 'No description provided',
+          priority: rec.priority || 'Medium',
+          estimatedSavings: rec.estimatedSavings || 'Unknown',
+          riskNotes: rec.implementation || 'No implementation notes'
+        });
+      }
+    });
+  }
+
+  return {
+    recommendations: gasOptimizations, // All recommendations are now gas optimizations
+    gasOptimizations,
+    securityInsights: [], // No longer categorizing security separately
+    summary: aiAnalysis.summary || 'AI analysis completed',
+    riskAssessment: aiAnalysis.riskAssessment || 'No risk assessment provided',
+    llmResponse: aiAnalysis.rawResponse || aiAnalysis, // Include full LLM response
+    rawResponse: aiAnalysis.rawResponse,
+    provider: aiAnalysis.provider || 'unknown',
+    timestamp: aiAnalysis.timestamp || new Date().toISOString()
+  };
+}
+
 // AI Analysis endpoint
 app.post('/api/ai/analyze', async (req, res) => {
   try {
-    const { contractAddress, analysisData, gasMetrics } = req.body;
+    const { contractAddress, analysisData, gasMetrics, options = {} } = req.body;
     
     if (!contractAddress || !analysisData) {
       return res.status(400).json({ 
@@ -585,37 +667,65 @@ app.post('/api/ai/analyze', async (req, res) => {
       });
     }
 
-    // Security validation
-    const isValid = await securityManager.validateAPIKey(req.headers.authorization);
-    if (!isValid) {
-      console.log('AI analysis request without valid API key, proceeding with basic analysis');
+    // Check if AI analysis is enabled and API key is available
+    const aiApiKey = process.env.IOINTELLIGENCE_API_KEY;
+    const apiKeyValidation = securityManager.validateApiKey(aiApiKey, 'iointelligence', true);
+    
+    if (apiKeyValidation.valid) {
+      console.log('AI analysis enabled with valid API key');
+    } else {
+      console.log('AI analysis request without valid API key, proceeding with basic analysis:', apiKeyValidation.reason);
+    }
+
+    // Extract gas metrics from analysis data if not provided
+    let extractedGasMetrics = gasMetrics;
+    if (!extractedGasMetrics && analysisData) {
+      extractedGasMetrics = aiAnalyzer.extractGasMetrics(analysisData);
+    }
+
+    // Extract ABI information from analysis data if available
+    let abiData = null;
+    if (analysisData && analysisData.abi) {
+      abiData = analysisData.abi;
+    } else if (analysisData && analysisData.contractABI) {
+      abiData = analysisData.contractABI;
+    } else if (options && options.abi) {
+      abiData = options.abi;
     }
 
     // Sanitize input data
     const sanitizedData = securityManager.sanitizeInput({
       contractAddress,
       analysisData,
-      gasMetrics
+      gasMetrics: extractedGasMetrics,
+      abi: abiData
     });
 
-    // Perform AI analysis
-    const aiInsights = await aiAnalyzer.analyzeGasProfile(
+    // Perform AI analysis using extracted gas metrics and ABI
+    const aiAnalysisResult = await aiAnalyzer.analyzeGasProfile(
       sanitizedData.analysisData,
       sanitizedData.contractAddress,
-      sanitizedData.gasMetrics
+      sanitizedData.gasMetrics,
+      options,
+      sanitizedData.abi
     );
 
+    // Transform AI analysis to frontend-expected format
+    const transformedInsights = transformAIAnalysisForFrontend(aiAnalysisResult);
+
     // Track performance metrics
-    await monitoringService.trackAIAnalysis({
+    await monitoringService.trackAnalysis({
       contractAddress: sanitizedData.contractAddress,
       success: true,
       responseTime: Date.now(),
-      insightsGenerated: aiInsights ? Object.keys(aiInsights).length : 0
+      insightsGenerated: transformedInsights ? Object.keys(transformedInsights).length : 0,
+      confidence: aiAnalysisResult?.aiAnalysis?.confidence,
+      recommendations: aiAnalysisResult?.aiAnalysis?.recommendations?.length || 0
     });
 
     res.json({
       success: true,
-      insights: aiInsights,
+      insights: transformedInsights,
       timestamp: new Date().toISOString()
     });
 
@@ -623,7 +733,7 @@ app.post('/api/ai/analyze', async (req, res) => {
     console.error('AI Analysis error:', error);
     
     // Track error metrics
-    await monitoringService.trackAIAnalysis({
+    await monitoringService.trackAnalysis({
       contractAddress: req.body.contractAddress,
       success: false,
       error: error.message,

@@ -7,7 +7,7 @@ class MonitoringService {
     this.enabled = process.env.AI_MONITORING_ENABLED === 'true';
     this.feedbackCollection = process.env.AI_FEEDBACK_COLLECTION === 'true';
     this.performanceTracking = process.env.AI_PERFORMANCE_TRACKING === 'true';
-    this.dataDir = path.join(process.cwd(), 'api', '.monitoring-data');
+    this.dataDir = path.join(process.cwd(), '.monitoring-data');
     this.sessionId = crypto.randomBytes(16).toString('hex');
     this.metrics = {
       analysisCount: 0,
@@ -266,21 +266,45 @@ class MonitoringService {
    * Private helper methods
    */
   async saveAnalysisRecord(record) {
-    const filename = `analysis-${record.timestamp.split('T')[0]}.jsonl`;
-    const filepath = path.join(this.dataDir, filename);
-    await fs.appendFile(filepath, JSON.stringify(record) + '\n');
+    try {
+      // Ensure directory exists
+      await fs.mkdir(this.dataDir, { recursive: true });
+      
+      const filename = `analysis-${record.timestamp.split('T')[0]}.jsonl`;
+      const filepath = path.join(this.dataDir, filename);
+      await fs.appendFile(filepath, JSON.stringify(record) + '\n');
+    } catch (error) {
+      console.error('Failed to save analysis record:', error.message);
+      throw error;
+    }
   }
 
   async saveSavingsRecord(record) {
-    const filename = `savings-${record.timestamp.split('T')[0]}.jsonl`;
-    const filepath = path.join(this.dataDir, filename);
-    await fs.appendFile(filepath, JSON.stringify(record) + '\n');
+    try {
+      // Ensure directory exists
+      await fs.mkdir(this.dataDir, { recursive: true });
+      
+      const filename = `savings-${record.timestamp.split('T')[0]}.jsonl`;
+      const filepath = path.join(this.dataDir, filename);
+      await fs.appendFile(filepath, JSON.stringify(record) + '\n');
+    } catch (error) {
+      console.error('Failed to save savings record:', error.message);
+      throw error;
+    }
   }
 
   async saveFeedbackRecord(record) {
-    const filename = `feedback-${record.timestamp.split('T')[0]}.jsonl`;
-    const filepath = path.join(this.dataDir, filename);
-    await fs.appendFile(filepath, JSON.stringify(record) + '\n');
+    try {
+      // Ensure directory exists
+      await fs.mkdir(this.dataDir, { recursive: true });
+      
+      const filename = `feedback-${record.timestamp.split('T')[0]}.jsonl`;
+      const filepath = path.join(this.dataDir, filename);
+      await fs.appendFile(filepath, JSON.stringify(record) + '\n');
+    } catch (error) {
+      console.error('Failed to save feedback record:', error.message);
+      throw error;
+    }
   }
 
   async loadAnalysisRecords(days = 30) {

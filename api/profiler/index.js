@@ -615,6 +615,7 @@ class SomniaGasProfiler {
       // Initialize results
       this.results.address = address;
       this.results.timestamp = new Date().toISOString();
+      this.results.contractABI = abi; // Add ABI to results for API access
       
       // Profile each function
       for (let i = 0; i < functions.length; i++) {

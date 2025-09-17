@@ -1,0 +1,25 @@
+{
+  "gasEfficiencyScore": 0,
+  "functionAnalysis": [],
+  "totalGasUsed": 0,
+  "averageGasPerFunction": 0,
+  "optimizationOpportunities": [],
+  "timestamp": "2025-09-15T02:15:18.952Z",
+  "aiAnalysis": {
+    "confidence": 0.6,
+    "recommendations": [
+      {
+        "title": "High Gas Consumption Detected",
+        "description": "Your contract functions are consuming more gas than optimal. Consider optimizing storage operations and reducing computational complexity.",
+        "priority": "High",
+        "difficulty": "Medium",
+        "estimatedSavings": "15-30%",
+        "implementation": "1. Review storage operations\n2. Optimize loops and conditionals\n3. Use more efficient data types"
+      }
+    ],
+    "summary": "Basic heuristic analysis performed due to AI service unavailability.",
+    "riskAssessment": "Recommendations are based on general best practices.",
+    "provider": "fallback",
+    "timestamp": "2025-09-15T02:15:27.089Z"
+  }
+}

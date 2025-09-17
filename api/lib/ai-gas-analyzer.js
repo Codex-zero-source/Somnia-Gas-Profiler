@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const axios = require('axios');
 const fs = require('fs').promises;
 const path = require('path');
+const CacheManager = require('./cache-manager');
 
 class AIGasAnalyzer {
   constructor(config = {}) {
@@ -11,11 +12,24 @@ class AIGasAnalyzer {
     this.model = process.env.IOINTELLIGENCE_MODEL || 'mistralai/Mistral-Large-Instruct-2411';
     this.enabled = process.env.AI_ANALYSIS_ENABLED === 'true';
     this.maxRetries = parseInt(process.env.AI_MAX_RETRIES) || 3;
-    this.timeout = parseInt(process.env.AI_TIMEOUT) || 30000;
+    this.timeout = parseInt(process.env.AI_TIMEOUT) || 60000; // Increased timeout for Mistral Large
     this.confidenceThreshold = parseFloat(process.env.AI_CONFIDENCE_THRESHOLD) || 0.7;
     this.encryptSensitiveData = process.env.AI_ENCRYPT_SENSITIVE_DATA === 'true';
     this.anonymizeContractData = process.env.AI_ANONYMIZE_CONTRACT_DATA === 'true';
     this.secureTransmission = process.env.AI_SECURE_TRANSMISSION === 'true';
+    // Cache configuration
+    this.cacheTTL = parseInt(process.env.AI_CACHE_TTL) || 300000; // 5 minutes default for development
+    this.enableCache = process.env.AI_ENABLE_CACHE !== 'false'; // Cache enabled by default
+    this.cacheManager = new CacheManager();
+    this.models = {
+      'iointelligence': 'meta-llama/Llama-3.3-70B-Instruct',
+      'openai': 'gpt-4o-mini',
+      'anthropic': 'claude-3-haiku-20240307'
+    };
+    // Initialize cache directory structure
+    this.cacheManager.initialize().catch(error => {
+      console.warn('Cache initialization failed:', error.message);
+    });
   }
 
   getApiKey() {
@@ -104,13 +118,39 @@ class AIGasAnalyzer {
   /**
    * Main entry point for gas profile analysis
    */
-  async analyzeGasProfile(analysisData, contractAddress, gasMetrics = null) {
+  async analyzeGasProfile(analysisData, contractAddress, gasMetrics = null, options = {}, abi = null) {
     try {
+      // Check cache first for existing analysis (unless force refresh is requested)
+      if (this.enableCache && !options.forceRefresh) {
+        const cachedAnalysis = await this.cacheManager.getAnalysisResults(contractAddress, this.cacheTTL);
+        
+        if (cachedAnalysis.found) {
+          console.log(`Returning cached AI analysis result (age: ${Math.round(cachedAnalysis.age / 1000)}s, TTL: ${Math.round(this.cacheTTL / 1000)}s)`);
+          return cachedAnalysis.analysis;
+        }
+      } else if (options.forceRefresh) {
+        console.log('Force refresh requested, bypassing cache');
+      }
+      
+      // Save contract profile data to cache
+      const profileCacheResult = await this.cacheManager.saveContractProfile(contractAddress, analysisData);
+      if (profileCacheResult.success) {
+        console.log(`Contract profile cached: ${profileCacheResult.filename}`);
+      }
+      
       // Extract gas metrics from analysis data if not provided
       const extractedMetrics = gasMetrics || this.extractGasMetrics(analysisData);
       
       // Perform AI analysis
-      return await this.analyzeWithAI(extractedMetrics, null);
+      const result = await this.analyzeWithAI(extractedMetrics, contractAddress, abi);
+      
+      // Cache the analysis result
+      const analysisCacheResult = await this.cacheManager.saveAnalysisResults(contractAddress, result);
+      if (analysisCacheResult.success) {
+        console.log(`AI analysis cached: ${analysisCacheResult.filename}`);
+      }
+      
+      return result;
     } catch (error) {
       console.error('Gas profile analysis failed:', error.message);
       return this.generateFallbackAnalysis(gasMetrics || {});
@@ -120,14 +160,14 @@ class AIGasAnalyzer {
   /**
    * Analyze gas consumption using AI
    */
-  async analyzeWithAI(gasMetrics, contractCode = null) {
+  async analyzeWithAI(gasMetrics, contractCode = null, abi = null) {
     if (!this.enabled || !this.apiKey) {
       console.warn('AI analysis is disabled or API key is missing');
       return this.generateFallbackAnalysis(gasMetrics);
     }
 
     try {
-      const analysisPrompt = this.buildAnalysisPrompt(gasMetrics, contractCode);
+      const analysisPrompt = this.buildAnalysisPrompt(gasMetrics, contractCode, abi);
       const response = await this.callAIService(analysisPrompt);
       
       return this.parseAIResponse(response, gasMetrics);
@@ -140,49 +180,51 @@ class AIGasAnalyzer {
   /**
    * Build analysis prompt for AI service
    */
-  buildAnalysisPrompt(gasMetrics, contractCode) {
+  buildAnalysisPrompt(gasMetrics, contractCode, abi = null) {
     const sanitizedCode = this.anonymizeContractData ? this.anonymizeCode(contractCode) : contractCode;
     
-    return {
-      role: 'system',
-      content: `You are an expert Ethereum gas optimization analyst. Analyze the following gas consumption data and provide actionable recommendations.
+    // Build profiling data from gas metrics
+    const profiling = [];
+    if (gasMetrics.functionAnalysis && Array.isArray(gasMetrics.functionAnalysis)) {
+      gasMetrics.functionAnalysis.forEach(func => {
+        profiling.push({
+          function: func.name || func.signature || 'unknown',
+          avgGasUsed: func.gasUsed || func.gasUsage || 0,
+          minGasUsed: func.minGas || func.gasUsed || 0,
+          maxGasUsed: func.maxGas || func.gasUsed || 0,
+          callsSampled: func.calls || func.samples || 1
+        });
+      });
+    }
+    
+    const promptText = `Analyze this smart contract for gas optimization opportunities.
 
-Gas Metrics:
-- Total Gas Used: ${gasMetrics.totalGasUsed}
-- Average Gas Per Function: ${gasMetrics.averageGasPerFunction}
-- Efficiency Score: ${gasMetrics.gasEfficiencyScore}
-- Number of Functions: ${gasMetrics.functionAnalysis.length}
+Contract ABI: ${JSON.stringify(abi || [], null, 2)}
 
-Function Analysis:
-${gasMetrics.functionAnalysis.map(func => 
-  `- ${func.name}: ${func.gasUsed} gas (Efficiency: ${func.efficiency})`
-).join('\n')}
+Gas Profiling Data: ${JSON.stringify(profiling, null, 2)}
 
-${contractCode ? `Contract Code (anonymized): ${sanitizedCode.substring(0, 2000)}...` : ''}
-
-Please provide:
-1. Top 3 optimization opportunities with specific gas savings estimates
-2. Priority ranking (High/Medium/Low) for each recommendation
-3. Implementation difficulty (Easy/Medium/Hard)
-4. Expected gas savings percentage
-5. Code-specific suggestions if contract code is provided
-
-Respond in JSON format with the following structure:
+IMPORTANT: Respond ONLY with valid JSON in this exact format:
 {
-  "confidence": 0.0-1.0,
+  "confidence": 0.8,
   "recommendations": [
     {
-      "title": "Optimization title",
-      "description": "Detailed description",
-      "priority": "High|Medium|Low",
-      "difficulty": "Easy|Medium|Hard",
-      "estimatedSavings": "percentage or gas amount",
-      "implementation": "Step-by-step guide"
+      "function": "functionName",
+      "issue": "Short description of inefficiency",
+      "suggestion": "Specific optimization recommendation",
+      "priority": "High",
+      "estimatedSavings": "Approx gas savings if possible",
+      "riskNotes": "Potential trade-offs or risks"
     }
   ],
-  "summary": "Overall analysis summary",
-  "riskAssessment": "Potential risks and considerations"
-}`
+  "summary": "One-paragraph summary of main findings",
+  "riskAssessment": "List of risks from applying optimizations"
+}
+
+Do not include any text before or after the JSON. Only return valid JSON.`;
+    
+    return {
+      role: 'user',
+      content: promptText
     };
   }
 
@@ -203,13 +245,25 @@ Respond in JSON format with the following structure:
 
       const requestBody = this.buildRequestBody(prompt);
       
+      console.log('🤖 Making AI service call to:', this.getApiEndpoint());
+      console.log('🤖 Request body:', JSON.stringify(requestBody, null, 2));
+      
       const response = await axios.post(this.getApiEndpoint(), requestBody, {
         headers,
         timeout: this.timeout
       });
 
-      return this.extractResponseContent(response.data);
+      console.log('🤖 AI service response status:', response.status);
+      console.log('🤖 AI service response data:', JSON.stringify(response.data, null, 2));
+      
+      const content = this.extractResponseContent(response.data);
+      console.log('🤖 Extracted content:', content);
+      
+      return content;
     } catch (error) {
+      console.error('🤖 AI service call error:', error.message);
+      console.error('🤖 Error details:', error.response?.data || error);
+      
       if (retryCount < this.maxRetries) {
         console.warn(`AI service call failed, retrying... (${retryCount + 1}/${this.maxRetries})`);
         await this.delay(1000 * (retryCount + 1)); // Exponential backoff
@@ -271,27 +325,48 @@ Respond in JSON format with the following structure:
    */
   parseAIResponse(aiResponse, originalMetrics) {
     try {
-      const parsed = JSON.parse(aiResponse);
+      // Clean the AI response to handle markdown formatting
+      let cleanedResponse = aiResponse.trim();
       
-      // Validate confidence threshold
-      if (parsed.confidence < this.confidenceThreshold) {
-        console.warn(`AI confidence (${parsed.confidence}) below threshold (${this.confidenceThreshold})`);
-        return this.generateFallbackAnalysis(originalMetrics);
+      // More aggressive markdown cleaning
+      // Remove code block markers with any language identifier
+      cleanedResponse = cleanedResponse.replace(/^```[a-zA-Z]*\s*\n?/, '');
+      cleanedResponse = cleanedResponse.replace(/\n?\s*```\s*$/, '');
+      
+      // Remove any remaining backticks at start/end
+      cleanedResponse = cleanedResponse.replace(/^`+|`+$/g, '');
+      
+      // Clean up extra whitespace and newlines
+      cleanedResponse = cleanedResponse.trim();
+      
+      // If it still starts with non-JSON characters, try to find JSON content
+      if (!cleanedResponse.startsWith('{') && !cleanedResponse.startsWith('[')) {
+        const jsonMatch = cleanedResponse.match(/({[\s\S]*})/); 
+        if (jsonMatch) {
+          cleanedResponse = jsonMatch[1];
+        }
       }
+      
+      const parsed = JSON.parse(cleanedResponse);
+      
+      // Note: Confidence threshold validation removed - always use AI response
+      console.log(`AI confidence: ${parsed.confidence || 'not provided'}`);
 
       return {
         ...originalMetrics,
         aiAnalysis: {
-          confidence: parsed.confidence,
+          confidence: parsed.confidence || 1.0,
           recommendations: parsed.recommendations || [],
           summary: parsed.summary || 'No summary provided',
           riskAssessment: parsed.riskAssessment || 'No risk assessment provided',
           provider: this.provider,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          rawResponse: parsed // Store the full AI response for debugging
         }
       };
     } catch (error) {
       console.error('Failed to parse AI response:', error.message);
+      console.error('Raw AI response:', aiResponse.substring(0, 200) + '...');
       return this.generateFallbackAnalysis(originalMetrics);
     }
   }
@@ -301,9 +376,20 @@ Respond in JSON format with the following structure:
    */
   generateFallbackAnalysis(gasMetrics) {
     const recommendations = [];
+    
+    // Ensure gasMetrics has required properties with defaults
+    const safeMetrics = {
+      gasEfficiencyScore: 0,
+      functionAnalysis: [],
+      totalGasUsed: 0,
+      averageGasPerFunction: 0,
+      optimizationOpportunities: [],
+      timestamp: new Date().toISOString(),
+      ...gasMetrics
+    };
 
     // Basic heuristic recommendations
-    if (gasMetrics.gasEfficiencyScore < 50) {
+    if (safeMetrics.gasEfficiencyScore < 50) {
       recommendations.push({
         title: 'High Gas Consumption Detected',
         description: 'Your contract functions are consuming more gas than optimal. Consider optimizing storage operations and reducing computational complexity.',
@@ -314,7 +400,7 @@ Respond in JSON format with the following structure:
       });
     }
 
-    if (gasMetrics.functionAnalysis.some(func => func.gasUsed > 100000)) {
+    if (Array.isArray(safeMetrics.functionAnalysis) && safeMetrics.functionAnalysis.some(func => (func.gasUsed || func.gasUsage || 0) > 100000)) {
       recommendations.push({
         title: 'Expensive Function Calls',
         description: 'Some functions are consuming excessive gas. Break down complex operations into smaller functions.',
@@ -326,7 +412,7 @@ Respond in JSON format with the following structure:
     }
 
     return {
-      ...gasMetrics,
+      ...safeMetrics,
       aiAnalysis: {
         confidence: 0.6,
         recommendations,
@@ -383,6 +469,8 @@ Respond in JSON format with the following structure:
   delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
+
+
 
   /**
    * Save analysis results to file

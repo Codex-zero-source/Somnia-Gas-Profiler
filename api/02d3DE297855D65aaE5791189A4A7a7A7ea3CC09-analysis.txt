@@ -1,0 +1,44 @@
+Somnia Gas Profiling Report
+==========================
+Contract: 0x02d3DE297855D65aaE5791189A4A7a7A7ea3CC09
+Network: Somnia Testnet
+Functions Analyzed: 8
+Timestamp: 2025-09-17T20:56:11.942Z
+
+Developer Analysis
+-------------------
+Contract Type: Custom
+Complexity: moderate
+Total Functions: 8
+  - View/Pure: 8
+  - State-changing: 0
+Events: 0
+Bytecode: 3036 bytes
+
+Somnia Gas Profiling Results
+==============================
+
+Query Functions
+---------------
+  • getRoundData(uint80) - Excellent (42,580 gas)
+
+Fee Management
+--------------
+  • dataFeedStore() - Excellent (32,784 gas)
+
+Other Functions
+---------------
+  • description() - Very High (1,534,306 gas)
+  • latestRoundData() - Excellent (34,972 gas)
+  • latestAnswer() - Excellent (34,360 gas)
+  • latestRound() - Excellent (34,219 gas)
+  • id() - Excellent (32,823 gas)
+  • decimals() - Excellent (32,751 gas)
+
+Key Developer Insights
+----------------------
+• Average Gas Usage: 222,349
+• Range: 32,751 - 1,534,306 gas
+• Most Expensive: description()
+• Most Efficient: decimals()
+• Total Analysis Cost: 0.03201831 STT

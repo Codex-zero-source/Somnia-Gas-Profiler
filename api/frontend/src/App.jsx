@@ -220,6 +220,9 @@ export default function SomniaGasProfiler() {
           totalGas: analysisResult.totalGas,
           averageGas: analysisResult.averageGas,
           totalRuns: analysisResult.totalRuns
+        },
+        options: {
+          abi: analysisResult.contractABI
         }
       });
 
@@ -666,30 +669,44 @@ export default function SomniaGasProfiler() {
                   </div>
                 </div>
                 <div className="bg-black/20 p-4 border-2 border-black/50 rounded">
-                  {aiInsights.recommendations && aiInsights.recommendations.length > 0 && (
-                    <div className="mb-6">
-                      <h5 className="text-lg font-black text-black mb-3 uppercase">🎯 OPTIMIZATION RECOMMENDATIONS</h5>
-                      <ul className="space-y-2">
-                        {aiInsights.recommendations.map((rec, index) => (
-                          <li key={index} className="flex items-start space-x-2">
-                            <span className="text-black font-bold">•</span>
-                            <span className="text-black font-bold">{rec}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
                   {aiInsights.gasOptimizations && aiInsights.gasOptimizations.length > 0 && (
                     <div className="mb-6">
                       <h5 className="text-lg font-black text-black mb-3 uppercase">⚡ GAS OPTIMIZATIONS</h5>
-                      <ul className="space-y-2">
+                      <div className="space-y-4">
                         {aiInsights.gasOptimizations.map((opt, index) => (
-                          <li key={index} className="flex items-start space-x-2">
-                            <span className="text-black font-bold">•</span>
-                            <span className="text-black font-bold">{opt}</span>
-                          </li>
+                          <div key={index} className="bg-black/30 p-4 border-2 border-black rounded">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-black font-black text-sm uppercase">Function: {opt.function}</span>
+                              <span className={`px-2 py-1 text-xs font-bold uppercase rounded ${
+                                opt.priority === 'High' ? 'bg-red-500 text-white' :
+                                opt.priority === 'Medium' ? 'bg-yellow-500 text-black' :
+                                'bg-green-500 text-white'
+                              }`}>
+                                {opt.priority} Priority
+                              </span>
+                            </div>
+                            <div className="mb-2">
+                              <span className="text-black font-bold text-sm">Issue: </span>
+                              <span className="text-black">{opt.issue}</span>
+                            </div>
+                            <div className="mb-2">
+                              <span className="text-black font-bold text-sm">Suggestion: </span>
+                              <span className="text-black">{opt.suggestion}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-black font-bold text-sm">
+                                💰 Estimated Savings: <span className="text-green-300">{opt.estimatedSavings}</span>
+                              </span>
+                            </div>
+                            {opt.riskNotes && (
+                              <div className="mt-2 pt-2 border-t border-black/20">
+                                <span className="text-black font-bold text-sm">⚠️ Risk Notes: </span>
+                                <span className="text-black text-sm">{opt.riskNotes}</span>
+                              </div>
+                            )}
+                          </div>
                         ))}
-                      </ul>
+                      </div>
                     </div>
                   )}
                   {aiInsights.securityInsights && aiInsights.securityInsights.length > 0 && (
@@ -706,9 +723,28 @@ export default function SomniaGasProfiler() {
                     </div>
                   )}
                   {aiInsights.summary && (
-                    <div>
+                    <div className="mb-6">
                       <h5 className="text-lg font-black text-black mb-3 uppercase">📊 AI SUMMARY</h5>
                       <p className="text-black font-bold leading-relaxed">{aiInsights.summary}</p>
+                    </div>
+                  )}
+                  {aiInsights.riskAssessment && (
+                    <div>
+                      <h5 className="text-lg font-black text-black mb-3 uppercase">⚠️ RISK ASSESSMENT</h5>
+                      <div className="bg-yellow-500/20 p-3 border-2 border-yellow-500 rounded">
+                        {Array.isArray(aiInsights.riskAssessment) ? (
+                          <ul className="space-y-1">
+                            {aiInsights.riskAssessment.map((risk, index) => (
+                              <li key={index} className="flex items-start space-x-2">
+                                <span className="text-yellow-600 font-bold">⚠️</span>
+                                <span className="text-black font-bold text-sm">{risk}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-black font-bold text-sm">{aiInsights.riskAssessment}</p>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

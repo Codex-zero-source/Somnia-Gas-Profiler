@@ -1,0 +1,40 @@
+{
+  "totalGasUsed": 0,
+  "averageGasPerFunction": 0,
+  "gasEfficiencyScore": 0,
+  "functionAnalysis": [],
+  "optimizationOpportunities": [],
+  "timestamp": "2025-09-17T21:10:12.636Z",
+  "aiAnalysis": {
+    "confidence": 0.8,
+    "recommendations": [
+      {
+        "function": "Unknown",
+        "issue": "Insufficient data for analysis",
+        "suggestion": "Provide contract ABI and gas profiling data for accurate optimization opportunities",
+        "priority": "High",
+        "estimatedSavings": "Unknown",
+        "riskNotes": "No risks identified due to lack of data"
+      }
+    ],
+    "summary": "Insufficient data provided to analyze the smart contract for gas optimization opportunities. Contract ABI and gas profiling data are necessary for a thorough analysis.",
+    "riskAssessment": "No risks identified due to lack of data",
+    "provider": "iointelligence",
+    "timestamp": "2025-09-17T21:10:24.271Z",
+    "rawResponse": {
+      "confidence": 0.8,
+      "recommendations": [
+        {
+          "function": "Unknown",
+          "issue": "Insufficient data for analysis",
+          "suggestion": "Provide contract ABI and gas profiling data for accurate optimization opportunities",
+          "priority": "High",
+          "estimatedSavings": "Unknown",
+          "riskNotes": "No risks identified due to lack of data"
+        }
+      ],
+      "summary": "Insufficient data provided to analyze the smart contract for gas optimization opportunities. Contract ABI and gas profiling data are necessary for a thorough analysis.",
+      "riskAssessment": "No risks identified due to lack of data"
+    }
+  }
+}

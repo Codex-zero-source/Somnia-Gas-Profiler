@@ -127,7 +127,7 @@ export const deleteAnalysisCache = async (contractAddress) => {
 /**
  * AI-powered gas analysis
  */
-export async function aiAnalyzeContract({ contractAddress, analysisData, gasMetrics }) {
+export async function aiAnalyzeContract({ contractAddress, analysisData, gasMetrics, options = {} }) {
   try {
     const response = await fetch(`${API_BASE_URL}/api/ai/analyze`, {
       method: 'POST',
@@ -137,7 +137,8 @@ export async function aiAnalyzeContract({ contractAddress, analysisData, gasMetr
       body: JSON.stringify({
         contractAddress,
         analysisData,
-        gasMetrics
+        gasMetrics,
+        options
       }),
     });
 

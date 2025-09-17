@@ -19,6 +19,7 @@ This document outlines the complete architecture integration for the Somnia Gas 
 │  │ • Web3 Integration│   │ • CLI Execution │    │   Registry      │            │
 │  │ • Real-time UI  │    │ • API Endpoints │    │ • On-chain      │            │
 │  │ • Wallet Connect│    │ • Health Monitor│    │   Storage       │            │
+│  │ • AI Insights UI│    │ • AI Integration│    │                 │            │
 │  └─────────────────┘    └─────────────────┘    └─────────────────┘            │
 │           │                       │                       │                    │
 │           │              ┌─────────────────┐              │                    │
@@ -28,6 +29,7 @@ This document outlines the complete architecture integration for the Somnia Gas 
 │                          │ • Analysis Data │                                   │
 │                          │ • Metadata      │                                   │
 │                          │ • Statistics    │                                   │
+│                          │ • AI Results    │                                   │
 │                          └─────────────────┘                                   │
 │                                   │                                            │
 │                          ┌─────────────────┐                                   │
@@ -37,6 +39,14 @@ This document outlines the complete architecture integration for the Somnia Gas 
 │                          │ • Contract Data │                                   │
 │                          │ • Transaction   │                                   │
 │                          │   History       │                                   │
+│                          └─────────────────┘                                   │
+│                                   │                                            │
+│                          ┌─────────────────┐                                   │
+│                          │  AI PROVIDERS   │                                   │
+│                          │                 │                                   │
+│                          │ • IO Intelligence│                                  │
+│                          │ • OpenAI        │                                   │
+│                          │ • Anthropic     │                                   │
 │                          └─────────────────┘                                   │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -101,12 +111,66 @@ api/
 **API Endpoints**:
 ```
 POST   /api/analyze           # Contract analysis with caching
+POST   /api/ai/analyze        # AI-powered analysis with insights
 GET    /api/health            # System health check
 GET    /api/recent?limit=N    # Recent analyses
 GET    /api/stats             # Global statistics
 GET    /api/cache/stats       # Cache performance
 GET    /api/cache/:address    # Cached analysis retrieval
 DELETE /api/cache/:address    # Cache invalidation
+```
+
+### 4. AI Integration Layer
+
+**Location**: `api/services/`
+**Technology Stack**:
+- Multiple AI provider support (IO Intelligence, OpenAI, Anthropic)
+- Axios for HTTP requests
+- Environment-based configuration
+- Fallback mechanisms
+
+**Architecture**:
+```
+api/services/
+├── aiService.js           # Main AI service orchestrator
+├── providers/
+│   ├── ioIntelligence.js  # IO Intelligence provider
+│   ├── openai.js          # OpenAI provider
+│   └── anthropic.js       # Anthropic provider
+└── aiAnalyzer.js          # Analysis logic and prompt engineering
+```
+
+**AI Service Features**:
+- **Multi-Provider Support**: Configurable AI provider selection
+- **Intelligent Fallbacks**: Automatic provider switching on failures
+- **Structured Prompts**: Optimized prompts for gas optimization analysis
+- **Response Validation**: Ensures consistent AI response format
+- **Caching Integration**: AI results cached with analysis data
+- **Error Handling**: Graceful degradation when AI services unavailable
+
+**AI Analysis Flow**:
+```
+Contract Data → Prompt Engineering → AI Provider → Response Validation → Structured Insights
+```
+
+**AI Response Structure**:
+```javascript
+{
+  gasOptimizations: [
+    {
+      function: "transfer",
+      issue: "Redundant balance checks",
+      suggestion: "Use unchecked arithmetic for gas savings",
+      priority: "high",
+      estimatedSavings: "15-25%"
+    }
+  ],
+  summary: "Contract shows moderate optimization potential...",
+  riskAssessment: "Low risk implementation with standard patterns",
+  provider: "iointelligence",
+  timestamp: "2024-01-15T10:30:00Z",
+  confidence: 0.85
+}
 ```
 
 ### 3. Smart Contract Layer (Solidity)
@@ -188,7 +252,37 @@ cache_stats                   # Cache performance metrics
                                 5. Cache Results
 ```
 
-### 2. On-Chain Storage Flow
+### 2. AI Analysis Request Flow
+
+```
+┌─────────────┐    1. AI Request ┌─────────────┐    2. Check Cache ┌─────────────┐
+│  Frontend   │ ──────────────► │   Backend   │ ──────────────► │   Redis     │
+│             │                 │             │                 │   Cache     │
+└─────────────┘                 └─────────────┘                 └─────────────┘
+       ▲                               │                               │
+       │                               │ 3a. Cache Miss                │
+       │                               ▼                               │
+       │                        ┌─────────────┐                       │
+       │                        │ AI Service  │                       │
+       │                        │ Orchestrator│                       │
+       │                        └─────────────┘                       │
+       │                               │                               │
+       │                               │ 4. Provider Selection         │
+       │                               ▼                               │
+       │                        ┌─────────────┐                       │
+       │                        │AI Provider  │                       │
+       │                        │(IO Intel/   │                       │
+       │                        │OpenAI/      │                       │
+       │                        │Anthropic)   │                       │
+       │                        └─────────────┘                       │
+       │                               │                               │
+       │ 7. Return AI Insights         │ 5. Cache AI Results           │
+       │                               ▼                               │
+       └───────────────────────────────────────────────────────────────┘
+                                6. Store Results
+```
+
+### 3. On-Chain Storage Flow
 
 ```
 ┌─────────────┐    1. Store      ┌─────────────┐    2. Transaction ┌─────────────┐
@@ -205,7 +299,7 @@ cache_stats                   # Cache performance metrics
                                 └─────────────┘
 ```
 
-### 3. Real-Time Updates Flow
+### 4. Real-Time Updates Flow
 
 ```
 ┌─────────────┐    WebSocket     ┌─────────────┐    Event Listen  ┌─────────────┐
@@ -265,7 +359,57 @@ const storeOnChain = async (analysisData) => {
 };
 ```
 
-### 3. Error Handling Pattern
+### 3. AI Integration Pattern
+
+**Backend → AI Providers**:
+```javascript
+// AI Service Integration
+const generateAIInsights = async (analysisData) => {
+  const aiService = new AIService({
+    provider: process.env.AI_PROVIDER || 'iointelligence',
+    apiKey: process.env.IOINTELLIGENCE_API_KEY,
+    fallbackProviders: ['openai', 'anthropic']
+  });
+  
+  try {
+    const insights = await aiService.analyzeContract(analysisData);
+    await cacheAIResults(analysisData.contractAddress, insights);
+    return insights;
+  } catch (error) {
+    console.warn('AI analysis failed, returning basic insights:', error);
+    return generateBasicInsights(analysisData);
+  }
+};
+```
+
+**Frontend → AI Insights Display**:
+```javascript
+// AI Insights Rendering
+const AIInsightsSection = ({ aiInsights }) => {
+  if (!aiInsights) return <div>AI analysis unavailable</div>;
+  
+  return (
+    <div className="ai-insights">
+      <h3>🤖 AI-Powered Insights</h3>
+      {aiInsights.gasOptimizations?.map((opt, index) => (
+        <div key={index} className="optimization-card">
+          <span className={`priority-${opt.priority}`}>{opt.priority}</span>
+          <h4>{opt.function}</h4>
+          <p><strong>Issue:</strong> {opt.issue}</p>
+          <p><strong>Suggestion:</strong> {opt.suggestion}</p>
+          <p><strong>Estimated Savings:</strong> {opt.estimatedSavings}</p>
+        </div>
+      ))}
+      <div className="risk-assessment">
+        <h4>Risk Assessment</h4>
+        <p>{aiInsights.riskAssessment}</p>
+      </div>
+    </div>
+  );
+};
+```
+
+### 4. Error Handling Pattern
 
 **Graceful Degradation**:
 ```javascript
@@ -375,6 +519,11 @@ services:
     environment:
       - REDIS_URL=redis://redis:6379
       - NODE_ENV=production
+      - AI_ENABLED=true
+      - AI_PROVIDER=iointelligence
+      - IOINTELLIGENCE_API_KEY=${IOINTELLIGENCE_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
     depends_on: [redis]
   
   redis:
@@ -450,6 +599,10 @@ const logger = {
 - [x] Error handling and graceful degradation
 - [x] Health monitoring
 - [x] Documentation
+- [x] AI integration with multiple provider support
+- [x] AI-powered gas optimization insights
+- [x] Frontend AI insights display components
+- [x] AI result caching and fallback mechanisms
 
 ### 🔄 In Progress
 - [ ] WebSocket real-time updates

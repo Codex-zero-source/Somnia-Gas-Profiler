@@ -1,0 +1,49 @@
+Somnia Gas Profiling Report
+==========================
+Contract: 0x00e3456C94aAA0F574E2d6225336373D46C861E0
+Network: Somnia Testnet
+Functions Analyzed: 10
+Timestamp: 2025-09-17T22:26:34.245Z
+
+Developer Analysis
+-------------------
+Contract Type: ERC721
+Complexity: very complex
+Total Functions: 42
+  - View/Pure: 19
+  - State-changing: 23
+Events: 14
+Bytecode: 36640 bytes
+
+Somnia Gas Profiling Results
+==============================
+
+Query Functions
+---------------
+  • approveDelegator(address,uint256) - Excellent (28,000 gas)
+
+Administrative Functions
+------------------------
+  • changeVestingPlanAdmin(uint256,address) - Excellent (34,459 gas)
+  • deleteAdmin() - Excellent (22,826 gas)
+
+State Management
+----------------
+  • approveSpenderDelegator(address,uint256) - Excellent (34,874 gas)
+  • approve(address,uint256) - Excellent (28,000 gas)
+
+Other Functions
+---------------
+  • createPlan(address,address,uint256,uint256,uint256,uint256,uint256,address,bool) - Excellent (35,000 gas)
+  • delegate(uint256,address) - Excellent (34,633 gas)
+  • delegateAll(address,address) - Excellent (28,000 gas)
+  • delegatePlans(uint256[],address[]) - Excellent (28,000 gas)
+  • futureRevokePlans(uint256[],uint256) - Excellent (28,000 gas)
+
+Key Developer Insights
+----------------------
+• Average Gas Usage: 30,179
+• Range: 22,826 - 35,000 gas
+• Most Expensive: createPlan(address,address,uint256,uint256,uint256,uint256,uint256,address,bool)
+• Most Efficient: deleteAdmin()
+• Total Analysis Cost: 0.00543226 STT

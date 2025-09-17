@@ -1,0 +1,40 @@
+{
+  "totalGasUsed": 0,
+  "averageGasPerFunction": 0,
+  "gasEfficiencyScore": 0,
+  "functionAnalysis": [],
+  "optimizationOpportunities": [],
+  "timestamp": "2025-09-17T20:45:42.228Z",
+  "aiAnalysis": {
+    "confidence": 0.8,
+    "recommendations": [
+      {
+        "function": "Unknown",
+        "issue": "Insufficient data for analysis",
+        "suggestion": "Provide contract ABI and gas profiling data for accurate optimization opportunities",
+        "priority": "High",
+        "estimatedSavings": "Unknown",
+        "riskNotes": "Without data, potential optimizations and risks cannot be assessed"
+      }
+    ],
+    "summary": "Due to the lack of contract ABI and gas profiling data, specific optimization opportunities cannot be identified. Providing this data would allow for a more accurate analysis of gas optimization possibilities.",
+    "riskAssessment": "Applying optimizations without thorough analysis may introduce unintended behavior or security vulnerabilities.",
+    "provider": "iointelligence",
+    "timestamp": "2025-09-17T20:45:49.381Z",
+    "rawResponse": {
+      "confidence": 0.8,
+      "recommendations": [
+        {
+          "function": "Unknown",
+          "issue": "Insufficient data for analysis",
+          "suggestion": "Provide contract ABI and gas profiling data for accurate optimization opportunities",
+          "priority": "High",
+          "estimatedSavings": "Unknown",
+          "riskNotes": "Without data, potential optimizations and risks cannot be assessed"
+        }
+      ],
+      "summary": "Due to the lack of contract ABI and gas profiling data, specific optimization opportunities cannot be identified. Providing this data would allow for a more accurate analysis of gas optimization possibilities.",
+      "riskAssessment": "Applying optimizations without thorough analysis may introduce unintended behavior or security vulnerabilities."
+    }
+  }
+}

@@ -138,8 +138,11 @@ class SecurityManager {
   /**
    * Validate API key format and strength
    */
-  validateApiKey(apiKey, provider = 'unknown') {
+  validateApiKey(apiKey, provider = 'unknown', allowFallback = true) {
     if (!apiKey || typeof apiKey !== 'string') {
+      if (allowFallback) {
+        return { valid: false, reason: `No API key provided for ${provider}`, allowFallback: true };
+      }
       throw new Error(`Invalid API key format for ${provider}`);
     }
 
@@ -147,7 +150,7 @@ class SecurityManager {
     const validations = {
       iointelligence: {
         minLength: 20,
-        pattern: /^[a-zA-Z0-9_-]+$/
+        pattern: /^[a-zA-Z0-9._-]+$/
       },
       openai: {
         minLength: 40,
@@ -155,21 +158,27 @@ class SecurityManager {
       },
       anthropic: {
         minLength: 30,
-        pattern: /^[a-zA-Z0-9_-]+$/
+        pattern: /^[a-zA-Z0-9._-]+$/
       }
     };
 
     const validation = validations[provider] || validations.iointelligence;
     
     if (apiKey.length < validation.minLength) {
+      if (allowFallback) {
+        return { valid: false, reason: `API key too short for ${provider} (minimum ${validation.minLength} characters)`, allowFallback: true };
+      }
       throw new Error(`API key too short for ${provider} (minimum ${validation.minLength} characters)`);
     }
 
     if (!validation.pattern.test(apiKey)) {
+      if (allowFallback) {
+        return { valid: false, reason: `Invalid API key format for ${provider}`, allowFallback: true };
+      }
       throw new Error(`Invalid API key format for ${provider}`);
     }
 
-    return true;
+    return { valid: true, reason: 'API key is valid' };
   }
 
   /**
@@ -345,6 +354,50 @@ class SecurityManager {
       this.sessionId = crypto.randomBytes(16).toString('hex');
     }
     return this.sessionId;
+  }
+
+  /**
+   * Sanitize input data to prevent injection attacks
+   */
+  sanitizeInput(data) {
+    if (data === null || data === undefined) {
+      return data;
+    }
+
+    if (typeof data !== 'object') {
+      return data;
+    }
+
+    // Handle arrays properly
+    if (Array.isArray(data)) {
+      return data.map(item => this.sanitizeInput(item));
+    }
+
+    const sanitized = {};
+    
+    for (const [key, value] of Object.entries(data)) {
+      if (value === undefined || value === null) {
+        // Preserve undefined and null values to maintain object structure
+        sanitized[key] = value;
+      } else if (typeof value === 'string') {
+        // Remove potentially dangerous characters and limit length
+        sanitized[key] = value
+          .replace(/[<>"'&]/g, '') // Remove HTML/XML characters
+          .replace(/[\x00-\x1f\x7f-\x9f]/g, '') // Remove control characters
+          .substring(0, 10000); // Limit length
+      } else if (Array.isArray(value)) {
+        // Handle arrays properly
+        sanitized[key] = value.map(item => this.sanitizeInput(item));
+      } else if (typeof value === 'object') {
+        // Recursively sanitize nested objects
+        sanitized[key] = this.sanitizeInput(value);
+      } else {
+        // Keep other types as-is (numbers, booleans, etc.)
+        sanitized[key] = value;
+      }
+    }
+    
+    return sanitized;
   }
 
   /**

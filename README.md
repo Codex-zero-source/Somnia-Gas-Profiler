@@ -20,6 +20,7 @@ Live service (Render): https://somnia-gas-profiler.onrender.com
 
 - **Automated ABI Fetching**: Automatically retrieves contract ABIs from Somnia Explorer
 - **Comprehensive Gas Analysis**: Detailed gas consumption profiling for smart contract functions
+- **AI-Powered Insights**: Advanced AI analysis with optimization recommendations and risk assessment
 - **Developer-Focused Insights**: Categorized analysis with optimization recommendations
 - **Multiple Output Formats**: JSON, CSV, and table formats for different use cases
 - **Gasless Profiling**: Analyze contracts without spending gas using static analysis
@@ -75,6 +76,7 @@ The application will be available at `http://localhost:3000` with both the web i
 Once the server is running, open your browser to `http://localhost:3000` to access the modern React-based interface where you can:
 - Enter contract addresses for analysis
 - View detailed gas profiling results
+- Generate AI-powered optimization insights with risk assessment
 - Export analysis data in JSON or CSV format
 - Browse recent analyses and statistics
 
@@ -150,6 +152,48 @@ Health check endpoint returning server status and Redis connection info.
 ### GET /api/stats
 Retrieve global statistics about analyses performed.
 
+### POST /api/ai/analyze
+Generate AI-powered gas optimization insights for a contract.
+
+**Request Body:**
+```json
+{
+  "contractAddress": "0x1234567890123456789012345678901234567890",
+  "analysisData": { /* analysis results from /api/analyze */ },
+  "gasMetrics": {
+    "totalGas": 850000,
+    "averageGas": 85000,
+    "totalRuns": 10
+  },
+  "options": {
+    "abi": [ /* contract ABI array */ ]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "insights": {
+    "gasOptimizations": [
+      {
+        "function": "getPosts",
+        "issue": "Unbounded array iteration",
+        "suggestion": "Implement pagination for the getPosts function",
+        "priority": "High",
+        "estimatedSavings": "50-70%",
+        "riskNotes": "May require additional logic for handling pagination"
+      }
+    ],
+    "summary": "The contract has several areas where gas optimization is possible...",
+    "riskAssessment": ["Potential impact on user experience due to pagination"],
+    "provider": "iointelligence",
+    "timestamp": "2024-01-15T10:30:00.000Z"
+  }
+}
+```
+
 ## 🛠️ CLI Commands (Development)
 
 The following CLI tools are available for development and testing purposes. In production, the API server uses its own co-located copies of these tools.
@@ -188,6 +232,14 @@ Options:
 ```
 
 ## 📊 Analysis Features
+
+### AI-Powered Insights
+- **Gas Optimization Recommendations**: Function-specific suggestions with priority levels
+- **Estimated Savings**: Quantified gas reduction potential (e.g., "50-70%")
+- **Risk Assessment**: Potential impacts and implementation considerations
+- **Smart Contract ABI Integration**: Enhanced analysis using contract interface data
+- **Multiple AI Providers**: Support for IO Intelligence, OpenAI, and Anthropic
+- **Confidence Scoring**: AI analysis confidence levels and fallback mechanisms
 
 ### Function Categorization
 - **Query Functions**: View and read operations
@@ -317,6 +369,12 @@ LOG_LEVEL=info
 DEFAULT_GAS_LIMIT=8000000
 MAX_CONCURRENT_ANALYSES=5
 CACHE_TTL=3600
+
+# AI Integration Settings
+IOINTELLIGENCE_API_KEY=your_io_intelligence_api_key
+AI_PROVIDER=iointelligence
+AI_MODEL=gpt-4
+AI_ENABLED=true
 
 # Frontend Build (for production)
 FRONTEND_BUILD_PATH=./frontend/dist
@@ -487,6 +545,18 @@ const analysis = analyzer.analyzeGasProfile(profilingData, contractAddress);
 - **Issue**: Cache operations fail
 - **Solution**: Verify Redis server is running and accessible
 - **Check**: Test Redis connection with `redis-cli ping`
+
+#### AI Analysis Issues
+- **Issue**: AI insights generation fails or returns empty results
+- **Solution**: Check AI provider API key configuration in `.env`
+- **Check**: Verify `IOINTELLIGENCE_API_KEY` is valid and has sufficient credits
+- **Fallback**: System automatically provides basic analysis when AI is unavailable
+
+#### AI Provider Configuration
+- **Issue**: Unsupported AI provider error
+- **Solution**: Ensure `AI_PROVIDER` is set to `iointelligence`, `openai`, or `anthropic`
+- **Check**: Verify corresponding API key environment variable is set
+- **Debug**: Check server logs for specific AI provider error messages
 
 ## 🤝 Contributing
 
