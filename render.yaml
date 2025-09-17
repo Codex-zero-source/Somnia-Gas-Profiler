@@ -20,6 +20,32 @@ services:
         sync: false
       - key: RPC_URL
         value: https://dream-rpc.somnia.network
+      # AI Integration Configuration
+      - key: AI_ENABLED
+        value: true
+      - key: AI_PROVIDER
+        value: iointelligence
+      - key: AI_MODEL
+        value: gpt-4
+      - key: IOINTELLIGENCE_API_KEY
+        sync: false  # Set this in Render dashboard for security
+      - key: OPENAI_API_KEY
+        sync: false  # Optional fallback provider
+      - key: ANTHROPIC_API_KEY
+        sync: false  # Optional fallback provider
+      # Analysis Configuration
+      - key: ANALYSIS_TIMEOUT
+        value: 30000
+      - key: CACHE_TTL
+        value: 3600
+      - key: MAX_CONCURRENT_ANALYSES
+        value: 5
+      - key: AI_TIMEOUT
+        value: 30000
+      - key: AI_RETRY_ATTEMPTS
+        value: 3
+      - key: AI_FALLBACK_ENABLED
+        value: true
     healthCheckPath: /api/health
 
   # Redis Database
